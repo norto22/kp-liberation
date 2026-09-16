@@ -50,7 +50,14 @@ Temporary Items
 /build/
 /_tools/build/
 /_tools/node_modules/
+.devcontainer/
+docs/
 
 # KP-Steam
 steam_appid.txt
 kp_steam*.log
+
+# Agents
+AGENTS.md
+CLAUDE.md
+.codegraph/
