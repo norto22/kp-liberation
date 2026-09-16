@@ -215,6 +215,15 @@ KPLIB_halo_altitude = 2500;                                             // Altit
 KPLIB_secondary_missions_costs = [15, 10, 8];                           // Intel price for the secondary missions [FOB hunting, Convoy ambush, SAR].
 KPLIB_secondary_objective_impact = 0.6;                                 // The percentage impact against enemy combat readiness for a successful FOB hunt.
 KPLIB_recycling_percentage = 0.5;                                       // Percentage of resources you get back from recycling.
+KPLIB_taxi_pool_size = 2;                                               // Concurrently trackable AI taxi airframes, independent of KPLIB_heli_slots.
+KPLIB_taxi_fuel_cost_per_km = 2;                                        // Fuel charged per km of LZ distance from the departure FOB.
+KPLIB_taxi_fuel_cost_min = 5;                                           // Minimum fuel charged per taxi call regardless of distance.
+KPLIB_taxi_lz_min_range = 300;                                          // Minimum metres the LZ must be from the departure FOB.
+KPLIB_taxi_lz_max_range = 9000;                                         // Maximum metres the LZ may be from the departure FOB.
+KPLIB_taxi_rope_clear_grace = 3;                                        // Seconds to hold position after ropes go clear before actually departing.
+KPLIB_taxi_hover_timeout = 300;                                         // Safety-net seconds to hover before auto-departing even if ropes never clear.
+KPLIB_taxi_respawn_cooldown = 600;                                      // Seconds before a lost taxi airframe's pool slot becomes available again.
+KPLIB_taxi_alertness_chance = 60;                                       // 0-100 percent chance a completed taxi insertion spawns a hostile squad near the LZ.
 KPLIB_production_interval = 30;                                 // Time in minutes until a production process is finished, when resources multiplier is set to 1.
 
 KPLIB_sector_size = 1000;                                               // Range to activate a sector.

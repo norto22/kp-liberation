@@ -38,6 +38,7 @@ params [
     "_stats_supplies_produced",
     "_stats_supplies_spent",
     "_stats_vehicles_recycled",
+    "_stats_taxi_insertions",
     "_stats_rabbits_killed"
 ];
 
@@ -146,6 +147,7 @@ if (dialog) then {sleep 3};
 [] call _cleanPage;
 
 // Eighth page
+[691, format [localize "STR_STATS_TAXI", _stats_taxi_insertions]] call _addReportLine;
 [693, localize "STR_STATS_END1"] call _addReportLine;
 [694, localize "STR_STATS_END2"] call _addReportLine;
 [696, localize "STR_STATS_END3"] call _addReportLine;

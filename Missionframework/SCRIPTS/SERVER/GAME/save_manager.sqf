@@ -155,6 +155,7 @@ stats_spartan_respawns = 0;
 stats_supplies_produced = 0;
 stats_supplies_spent = 0;
 stats_vehicles_recycled = 0;
+stats_taxi_insertions = 0;
 
 // Prevent saving/duplication of objects placed in Eden
 {
@@ -236,6 +237,7 @@ if (!isNil "_saveData") then {
         stats_supplies_produced                     = _stats select 36;
         stats_supplies_spent                        = _stats select 37;
         stats_vehicles_recycled                     = _stats select 38;
+        stats_taxi_insertions                       = _stats param [39, 0];
     } else {
         // --- Compatibility for older save data ---
         ["Save data from version: pre 0.96.5", "SAVE"] call KPLIB_fnc_log;

@@ -18,6 +18,11 @@ FOB_truck_typename = "gm_gc_army_btr60pu12";                            // This 
 Arsenal_typename = "B_supplyCrate_F";                                   // This is the virtual arsenal as portable supply crates.
 Respawn_truck_typename = "gm_gc_army_ural375d_medic";                   // This is the mobile respawn (and medical) truck.
 huron_typename = "gm_gc_airforce_mi2t";                                 // This is Spartan 01, a multipurpose mobile respawn as a helicopter.
+// SHORTCUT: no verified light/armed taxi pair for this preset's mod content - both
+// default to huron_typename until a maintainer with the mod installed verifies real
+// classes. Ceiling: both taxi choices fly identically for this preset.
+taxi_typename_light = huron_typename;                                  // AI taxi (light/unarmed) - see SHORTCUT above.
+taxi_typename_armed = huron_typename;                                  // AI taxi (armed) - see SHORTCUT above.
 crewman_classname = "gm_gc_army_crew_mpiaks74nk_80_blk";                // This defines the crew for vehicles.
 pilot_classname = "gm_gc_army_crew_mpiaks74nk_80_blk";                  // This defines the pilot for helicopters.
 KPLIB_little_bird_classname = "gm_gc_bgs_p601";                 // Little birds replaced with unimog for container transportation.

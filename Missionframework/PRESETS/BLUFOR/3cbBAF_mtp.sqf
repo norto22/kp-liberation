@@ -23,6 +23,11 @@ FOB_truck_typename = "B_Truck_01_box_F";                                    // T
 Arsenal_typename = "B_supplyCrate_F";                                       // This is the virtual arsenal as portable supply crates.
 Respawn_truck_typename = "UK3CB_BAF_LandRover_Amb_FFR_Green_A_MTP";         // This is the mobile respawn (and medical) truck.
 huron_typename = "UK3CB_BAF_Merlin_HC3_18_MTP";                             // This is Spartan 01, a multipurpose mobile respawn as a helicopter.
+// SHORTCUT: no verified light/armed taxi pair for this preset's mod content - both
+// default to huron_typename until a maintainer with the mod installed verifies real
+// classes. Ceiling: both taxi choices fly identically for this preset.
+taxi_typename_light = huron_typename;                                  // AI taxi (light/unarmed) - see SHORTCUT above.
+taxi_typename_armed = huron_typename;                                  // AI taxi (armed) - see SHORTCUT above.
 crewman_classname = "UK3CB_BAF_Crewman_MTP";                                // This defines the crew for vehicles.
 pilot_classname = "UK3CB_BAF_HeliPilot_Army_MTP";                           // This defines the pilot for helicopters.
 KPLIB_little_bird_classname = "UK3CB_BAF_Wildcat_AH1_TRN_8A_MTP";   // These are the little birds which spawn on the Freedom or at Chimera base.

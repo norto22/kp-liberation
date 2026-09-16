@@ -26,6 +26,8 @@ FOB_truck_typename = "TIOW_SM_Rhino_DA";
 Arsenal_typename = "B_supplyCrate_F";
 Respawn_truck_typename = "B_Truck_01_medical_F";
 huron_typename = "B_Heli_Transport_03_unarmed_F";
+taxi_typename_light = "B_Heli_Light_01_F";                             // AI taxi (light/unarmed) - MH-9 Hummingbird.
+taxi_typename_armed = "B_Heli_Transport_01_F";                         // AI taxi (armed) - UH-80 Ghost Hawk.
 
 crewman_classname = "TIOW_Tactical_DA_1";
 pilot_classname = "TIOW_Tactical_DA_1";

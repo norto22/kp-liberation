@@ -2840,6 +2840,39 @@
             <Korean>공수 낙하</Korean>
             <Czech>HALO SKOK</Czech>
         </Key>
+        <Key ID="STR_TAXI_CALL_ACTION">
+            <Original>Call Taxi</Original>
+        </Key>
+        <Key ID="STR_TAXI_TITLE">
+            <Original>CALL TAXI</Original>
+        </Key>
+        <Key ID="STR_TAXI_FOB_LABEL">
+            <Original>Departure FOB</Original>
+        </Key>
+        <Key ID="STR_TAXI_CLASS_LIGHT">
+            <Original>Light</Original>
+        </Key>
+        <Key ID="STR_TAXI_CLASS_ARMED">
+            <Original>Armed</Original>
+        </Key>
+        <Key ID="STR_TAXI_CALL_BUTTON">
+            <Original>Call</Original>
+        </Key>
+        <Key ID="STR_TAXI_RANGE_HINT">
+            <Original>LZ must be between %1m and %2m from the departure FOB</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_ACTION">
+            <Original>Recall Taxi</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_TITLE">
+            <Original>RECALL TAXI</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_FOB_BUTTON">
+            <Original>Return to FOB</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_LZ_BUTTON">
+            <Original>Extract at LZ</Original>
+        </Key>
         <Key ID="STR_PARAM_CLEAR_CARGO">
             <Original>Clear spawned vehicle cargo</Original>
             <German>Inventar gespawnter Fahrzeuge leeren</German>
@@ -6685,6 +6718,9 @@
             <Portuguese>Número de baixas de Potato 01: %1</Portuguese>
             <Korean> 파괴된 재투입차량 : %1</Korean>
             <Czech>Počet ztracených Potato 01: %1</Czech>
+        </Key>
+        <Key ID="STR_STATS_TAXI">
+            <Original>AI taxi insertions: %1</Original>
         </Key>
         <Key ID="STR_STATS_RABBITS">
             <Original>Rabbits killed: %1</Original>
