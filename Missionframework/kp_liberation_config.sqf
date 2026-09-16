@@ -280,7 +280,12 @@ KPLIB_civinfo_task_chance = 40;                                 // Chance (0-100
 KPLIB_civinfo_task_duration = 900;                              // Duration until the task will despawn if no player is near. (seconds)
 
 KPLIB_convoy_ambush_chance = 2;                                 // Chance that a logistic convoy will be ambushed, when civil reputation is low.
-KPLIB_convoy_ambush_duration = 1200;                            // Duration of the convoy ambush event. (seconds)
+KPLIB_convoy_distress_duration = 1800;                          // Duration of the convoy distress-call response window. (seconds)
+KPLIB_convoy_distress_max_concurrent = 2;                       // Maximum number of convoy distress calls that may be active at once. Extra triggers are suppressed.
+KPLIB_convoy_distress_proximity_radius = 300;                   // Range at which a real hostile patrol/battlegroup triggers a convoy distress call. (meters)
+KPLIB_convoy_watchdog_interval = 45;                            // How often the per-truck watchdog samples position and hostile proximity. (seconds)
+KPLIB_convoy_watchdog_stuck_distance = 15;                      // Minimum distance a convoy truck must move per watchdog interval to not be considered stuck. (meters)
+KPLIB_convoy_watchdog_nudge_attempts = 2;                       // Failed nudge attempts before the watchdog repositions a stuck convoy truck.
 
 KPLIB_resistance_tier2 = 30;                                    // At which strength (0-100) the guerilla forces will be at tier 2?
 KPLIB_resistance_tier3 = 70;                                    // At which strength (0-100) the guerilla forces will be at tier 3?

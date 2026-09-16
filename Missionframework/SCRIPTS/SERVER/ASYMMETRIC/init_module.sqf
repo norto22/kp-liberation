@@ -1,6 +1,10 @@
 // Scripts
-// Logistic convoy ambush
-logistic_convoy_ambush = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\ASYMMETRIC\CONVOY\logistic_convoy_ambush.sqf";
+// Logistic convoy distress-call resolution (both trigger sources)
+logistic_convoy_distress_response = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\ASYMMETRIC\CONVOY\logistic_convoy_distress_response.sqf";
+// Spawns/despawns the physical truck+crew for one convoy leg
+logistic_convoy_spawn_truck = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\ASYMMETRIC\CONVOY\logistic_convoy_spawn_truck.sqf";
+// Per-truck stuck-AI recovery and hostile-proximity distress trigger
+logistic_convoy_watchdog = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\ASYMMETRIC\CONVOY\logistic_convoy_watchdog.sqf";
 // IED spawner for blufor sectors
 manage_asymIED = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\ASYMMETRIC\IED\manage_asymIED.sqf";
 // Spawner for guerilla ambushes in blufor sectors

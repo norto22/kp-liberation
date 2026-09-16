@@ -217,6 +217,8 @@ SCRIPTS/CLIENT/UI/ui_manager.sqf	warning	Variable "_attacked_string" not used
 SCRIPTS/SERVER/AI/building_defence_ai.sqf	warning	Local variable "_dir" assigned to an outer scope (not private)
 SCRIPTS/SERVER/AI/troup_transport.sqf	warning	Local variable "_infGrp" assigned to an outer scope (not private)
 SCRIPTS/SERVER/AI/troup_transport.sqf	warning	Local variable "_infGrp" is not from this scope (not private)
+SCRIPTS/SERVER/ASYMMETRIC/CONVOY/logistic_convoy_watchdog.sqf	error	can't interpret statement (missing ;?): <Variable(KPLIB_convoy_trucks)> <Variable(findIf)> <Code({(_x select 0) == _convoyIndex})>
+SCRIPTS/SERVER/ASYMMETRIC/CONVOY/logistic_convoy_watchdog.sqf	warning	Local variable "_x" is not from this scope (not private)
 SCRIPTS/SERVER/ASYMMETRIC/IED/manage_asymIED.sqf	warning	Local variable "_nearinfantry" assigned to an outer scope (not private)
 SCRIPTS/SERVER/ASYMMETRIC/IED/manage_asymIED.sqf	warning	Local variable "_nearinfantry" is not from this scope (not private)
 SCRIPTS/SERVER/ASYMMETRIC/IED/manage_asymIED.sqf	warning	Local variable "_nearvehicles" assigned to an outer scope (not private)
@@ -276,6 +278,10 @@ SCRIPTS/SERVER/REMOTECALL/build_remote_call.sqf	warning	Local variable "_i" assi
 SCRIPTS/SERVER/REMOTECALL/build_remote_call.sqf	warning	Local variable "_i" is not from this scope (not private)
 SCRIPTS/SERVER/REMOTECALL/intel_remote_call.sqf	warning	Local variable "_intel_yield" assigned to an outer scope (not private)
 SCRIPTS/SERVER/REMOTECALL/intel_remote_call.sqf	warning	Local variable "_intel_yield" is not from this scope (not private)
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	Binary operator "!=" arguments must be [(Number,Number),(String,String),(Object,Object),(Group,Group),(Side,Side),(String,String),(Config,Config),(Display,Display),(Control,Control),(TeamMember,TeamMember),(NetObject,NetObject),(Task,Task),(Location,Location)] (lhs is Array, rhs is Number)
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	Binary operator "deleteat" arguments must be [(Array,Number)] (lhs is Array, rhs is Array)
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	can't interpret statement (missing ;?): <Array([undefined])> <Variable(findIf)> <Code({(_x select 0) == _convoyIdx})>
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	can't interpret statement (missing ;?): <Variable(KPLIB_convoy_trucks)> <Variable(findIf)> <Code({(_x select 0) == _convoyIdx})>
 SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	warning	Local variable "_height" assigned to an outer scope (not private)
 SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	warning	Local variable "_height" is not from this scope (not private)
 SCRIPTS/SERVER/SECONDARY/convoy_hijack.sqf	warning	Local variable "_waypoint" assigned to an outer scope (not private)

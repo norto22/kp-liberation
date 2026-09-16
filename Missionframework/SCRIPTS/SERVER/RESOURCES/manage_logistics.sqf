@@ -4,8 +4,9 @@ waitUntil {save_is_loaded};
 
 ["Logistic management started", "LOGISTIC"] call KPLIB_fnc_log;
 
-KPLIB_convoy_ambush_inProgress = false;
-KPLIB_convoy_ambush_check = 0;
+KPLIB_convoy_trucks = [];               // [convoyIndex, truckObject, crewGroup] entries for currently-spawned physical trucks. Runtime-only, never persisted.
+KPLIB_convoy_distress_active = [];      // convoyIndex values currently in an active, unresolved distress call. Runtime-only, never persisted.
+KPLIB_convoy_distress_outcomes = [];    // [convoyIndex, outcome] pairs pending consumption by the tick loop below. Runtime-only, never persisted.
 private _start = 0;
 while {KPLIB_endgame == 0} do {
 
@@ -18,6 +19,7 @@ while {KPLIB_endgame == 0} do {
         {
             private _locPos = -1;
             private _locRes = -1;
+            private _convoyIdx = _forEachIndex;
             switch (_x select 7) do {
                 case 0: {};
                 case 1;
@@ -289,38 +291,53 @@ while {KPLIB_endgame == 0} do {
                 };
                 case 2;
                 case 4: {
+                    private _truckOriginPos = if ((_x select 7) == 2) then {_x select 2} else {_x select 3};
+                    private _truckDestPos = if ((_x select 7) == 2) then {_x select 3} else {_x select 2};
+                    if ((KPLIB_convoy_trucks findIf {(_x select 0) == _convoyIdx}) == -1) then {
+                        [_convoyIdx, _truckOriginPos, _truckDestPos] spawn logistic_convoy_spawn_truck;
+                    };
+
                     if ((_x select 8) > 1) then {
 
-                        if (((_x select 8) <= ((ceil (((_x select 2) distance2D (_x select 3)) / 400)) - 3)) && ((_x select 8) >= 3) && !((_x select 6) isEqualTo [0,0,0]) && !KPLIB_convoy_ambush_inProgress && (KPLIB_civ_rep <= -25) && (((_x select 8) % 2) == 0)) then {
-                            private _dice = round (random 100);
-                            private _chance = KPLIB_convoy_ambush_chance;
-                            if (chance > 0) then {
-                                _chance = _chance + ([] call KPLIB_fnc_crGetMulti);
-                            };
-                            if (KPLIB_asymmetric_debug > 0) then {[format ["Logistic convoy %1: ambush possible - current ETA: %2 - Dice: %3 - Chance: %4", (_x select 0), (_x select 8), _dice, _chance], "ASYMMETRIC"] call KPLIB_fnc_log;};
-                            if (_dice <= _chance) then {
-                                private _convoy = +_x;
-                                sleep 0.1;
-                                [_convoy] spawn logistic_convoy_ambush;
-                                waitUntil {sleep 0.1; KPLIB_convoy_ambush_check != 0};
-                                if (KPLIB_convoy_ambush_check == 2) then {
-                                    _x set [1,0];
-                                    _x set [2,[0,0,0]];
-                                    _x set [3,[0,0,0]];
-                                    _x set [4,[0,0,0]];
-                                    _x set [5,[0,0,0]];
-                                    _x set [6,[0,0,0]];
-                                    _x set [7,0];
-                                    _x set [8,-1];
-                                } else {
-                                    _x set [8,((_x select 8) - 1)];
-                                    KPLIB_convoy_ambush_check = 0;
-                                };
+                        private _pendingOutcomeIdx = KPLIB_convoy_distress_outcomes findIf {(_x select 0) == _convoyIdx};
+                        if (_pendingOutcomeIdx != -1) then {
+                            // A distress call for this convoy resolved since the last tick - apply it here,
+                            // inside this same safe forEach, before the tick's KPLIB_logistics write-back.
+                            private _outcome = (KPLIB_convoy_distress_outcomes select _pendingOutcomeIdx) select 1;
+                            KPLIB_convoy_distress_outcomes deleteAt _pendingOutcomeIdx;
+                            if (_outcome == "lose") then {
+                                _x set [1,0];
+                                _x set [2,[0,0,0]];
+                                _x set [3,[0,0,0]];
+                                _x set [4,[0,0,0]];
+                                _x set [5,[0,0,0]];
+                                _x set [6,[0,0,0]];
+                                _x set [7,0];
+                                _x set [8,-1];
                             } else {
+                                // "win" - route left completely untouched, the bug fix. ETA resumes ticking.
                                 _x set [8,((_x select 8) - 1)];
                             };
                         } else {
-                            _x set [8,((_x select 8) - 1)];
+                            if (_convoyIdx in KPLIB_convoy_distress_active) then {
+                                // Distress call still unresolved - ETA paused, truck is intentionally
+                                // stationary (fighting), not stuck.
+                            } else {
+                                private _truckEntryIdx = KPLIB_convoy_trucks findIf {(_x select 0) == _convoyIdx};
+                                if ((_truckEntryIdx != -1) && ((_x select 8) <= ((ceil (((_x select 2) distance2D (_x select 3)) / 400)) - 3)) && ((_x select 8) >= 3) && !((_x select 6) isEqualTo [0,0,0]) && (KPLIB_civ_rep <= -25) && (((_x select 8) % 2) == 0)) then {
+                                    private _dice = round (random 100);
+                                    private _chance = KPLIB_convoy_ambush_chance;
+                                    if (_chance > 0) then {
+                                        _chance = _chance + ([] call KPLIB_fnc_crGetMulti);
+                                    };
+                                    if (KPLIB_asymmetric_debug > 0) then {[format ["Logistic convoy %1: ambush possible - current ETA: %2 - Dice: %3 - Chance: %4", (_x select 0), (_x select 8), _dice, _chance], "ASYMMETRIC"] call KPLIB_fnc_log;};
+                                    if (_dice <= _chance) then {
+                                        (KPLIB_convoy_trucks select _truckEntryIdx) params ["", "_distressTruck", "_distressCrew"];
+                                        [_convoyIdx, _distressTruck, _distressCrew, "ambush"] spawn logistic_convoy_distress_response;
+                                    };
+                                };
+                                _x set [8,((_x select 8) - 1)];
+                            };
                         };
 
                         if (KPLIB_logistic_debug > 0) then {[format ["Logistic Group Update: %1", _x], "LOGISTIC"] call KPLIB_fnc_log;};
@@ -453,6 +470,15 @@ while {KPLIB_endgame == 0} do {
                     };
                 };
                 default {};
+            };
+
+            private _truckEntryIndex = KPLIB_convoy_trucks findIf {(_x select 0) == _convoyIdx};
+            if ((_truckEntryIndex != -1) && !((_x select 7) in [2, 4])) then {
+                (KPLIB_convoy_trucks select _truckEntryIndex) params ["", "_trackedTruck", "_trackedCrewGroup"];
+                {deleteVehicle _x} forEach (units _trackedCrewGroup);
+                deleteGroup _trackedCrewGroup;
+                deleteVehicle _trackedTruck;
+                KPLIB_convoy_trucks deleteAt _truckEntryIndex;
             };
         } forEach _tempLogistics;
 
