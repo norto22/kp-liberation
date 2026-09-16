@@ -67,6 +67,12 @@ class KPLIB {
         class isRadio                   {};
         class log                       {};
         class potatoScan                {};
+        class progAddPoints             {};
+        class progApplyRecruitQuality   {};
+        class progAwardNearby           {};
+        class progGetPlayerData         {};
+        class progGetTier               {};
+        class progShowRankData          {};
         class protectObject             {};
         class secondsToTimer            {};
         class setDiscordState           {};

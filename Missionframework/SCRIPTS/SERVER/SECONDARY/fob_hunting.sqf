@@ -129,6 +129,7 @@ waitUntil {
 
 combat_readiness = round (combat_readiness * KPLIB_secondary_objective_impact);
 stats_secondary_objectives = stats_secondary_objectives + 1;
+[_base_position, KPLIB_prog_points_secondary_objective] call KPLIB_fnc_progAwardNearby;
 sleep 1;
 [] spawn KPLIB_fnc_doSave;
 sleep 3;

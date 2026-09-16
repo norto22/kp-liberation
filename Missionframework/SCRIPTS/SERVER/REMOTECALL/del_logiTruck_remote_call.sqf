@@ -77,3 +77,8 @@ if (_spaceSum < _crateSum) exitWith {(localize "STR_LOGISTIC_NOSPACE") remoteExe
 please_recalculate = true;
 
 (KPLIB_logistics select _index) set [1, ((KPLIB_logistics select _index) select 1) - 1];
+
+private _deliveringPlayer = allPlayers select {owner _x == _clientID};
+if (count _deliveringPlayer > 0) then {
+    [getPlayerUID (_deliveringPlayer select 0), KPLIB_prog_points_logi_delivery] call KPLIB_fnc_progAddPoints;
+};

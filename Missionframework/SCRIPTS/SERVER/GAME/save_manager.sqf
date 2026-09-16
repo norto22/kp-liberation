@@ -93,6 +93,8 @@ KPLIB_production = [];
 KPLIB_production_markers = [];
 // Radio tower classnames per radio tower sector
 KPLIB_sectorTowers = [];
+// Per-player veterancy/progression table, entries are [uid, points]
+KPLIB_progression = [];
 // Sectors under attack
 KPLIB_sectorsUnderAttack = [];
 // Global Intel resource
@@ -197,6 +199,7 @@ if (!isNil "_saveData") then {
         _allMines                                   = _saveData param [19, []];
         _allCrates                                  = _saveData param [20, []];
         KPLIB_sectorTowers                          = _saveData param [21, []];
+        KPLIB_progression                           = _saveData param [22, []];
 
         stats_ammo_produced                         = _stats select  0;
         stats_ammo_spent                            = _stats select  1;

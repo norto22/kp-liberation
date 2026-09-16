@@ -50,6 +50,7 @@ if (!KPLIB_fog_param) then {execVM "SCRIPTS\SERVER\GAME\set_fog.sqf";};
 execVM "SCRIPTS\SERVER\GAME\manage_time.sqf";
 execVM "SCRIPTS\SERVER\GAME\manage_weather.sqf";
 execVM "SCRIPTS\SERVER\GAME\playtime.sqf";
+execVM "SCRIPTS\SERVER\GAME\prog_playtime.sqf";
 execVM "SCRIPTS\SERVER\GAME\save_manager.sqf";
 execVM "SCRIPTS\SERVER\GAME\spawn_radio_towers.sqf";
 execVM "SCRIPTS\SERVER\GAME\synchronise_vars.sqf";

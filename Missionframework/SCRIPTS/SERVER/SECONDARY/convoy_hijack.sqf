@@ -158,6 +158,7 @@ deleteMarker _convoy_marker;
 
 combat_readiness = round (combat_readiness * 0.85);
 stats_secondary_objectives = stats_secondary_objectives + 1;
+[_spawnpos, KPLIB_prog_points_secondary_objective] call KPLIB_fnc_progAwardNearby;
 [5] remoteExec ["remote_call_intel"];
 KPLIB_secondary_in_progress = -1; publicVariable "KPLIB_secondary_in_progress";
 sleep 1;

@@ -58,6 +58,7 @@ execVM "SCRIPTS\CLIENT\MISC\broadcast_squad_colors.sqf";
 execVM "SCRIPTS\CLIENT\MISC\init_arsenal.sqf";
 execVM "SCRIPTS\CLIENT\MISC\permissions_warning.sqf";
 if (!KPLIB_ace) then {execVM "SCRIPTS\CLIENT\MISC\resupply_manager.sqf";};
+if (KPLIB_ace) then {execVM "SCRIPTS\CLIENT\MEDICAL\prog_medical_events.sqf";};
 execVM "SCRIPTS\CLIENT\MISC\secondary_jip.sqf";
 execVM "SCRIPTS\CLIENT\MISC\synchronise_vars.sqf";
 execVM "SCRIPTS\CLIENT\MISC\synchronise_eco.sqf";

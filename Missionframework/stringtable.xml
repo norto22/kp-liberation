@@ -7116,6 +7116,15 @@
             <Portuguese>O mod KP Ranks não está carregado</Portuguese>
             <Czech>KP Ranks mod nebyl načten</Czech>
         </Key>
+        <Key ID="STR_KPLIB_PROG_RECAP_RANK">
+            <English>Your Rank: %1</English>
+        </Key>
+        <Key ID="STR_KPLIB_PROG_RECAP_SCORE">
+            <English>Your Score: %1</English>
+        </Key>
+        <Key ID="STR_KPLIB_PROG_ABANDON_WARNING">
+            <English>Your vehicle at %1 has been flagged as abandoned!</English>
+        </Key>
         <Key ID="STR_KPLIB_LABELGROUPS">
             <English>Group Management</English>
             <Chinese>團隊管理</Chinese>

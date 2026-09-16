@@ -23,11 +23,8 @@ disableSerialization;
 
 // Dialog controls
 private _dialog = findDisplay 75803;
-private _ctrlLabelRank = _dialog displayCtrl 758031;
 private _ctrlRank = _dialog displayCtrl 758032;
-private _ctrlLabelScore = _dialog displayCtrl 758033;
 private _ctrlScore = _dialog displayCtrl 758034;
-private _ctrlLabelPlaytime = _dialog displayCtrl 758035;
 private _ctrlPlaytime = _dialog displayCtrl 758036;
 private _ctrlNoRanks = _dialog displayCtrl 758037;
 private _ctrlGroupList = _dialog displayCtrl 758038;
@@ -40,13 +37,11 @@ private _ctrlRadio = _dialog displayCtrl 7580315;
 private _ctrlValueSound = _dialog displayCtrl 7580316;
 private _ctrlSliderSound = _dialog displayCtrl 7580317;
 
-// Display KP Ranks data or hide the player menu entries for the data
+// Display KP Ranks data when the addon is loaded, otherwise fall back to the built-in progression system
 if (KPLIB_KPR) then {
     [] call KPLIB_fnc_showRankData;
 } else {
-    {
-        _x ctrlShow false;
-    } forEach [_ctrlLabelRank, _ctrlRank, _ctrlLabelScore, _ctrlScore, _ctrlLabelPlaytime, _ctrlPlaytime];
+    [] call KPLIB_fnc_progShowRankData;
 };
 
 // Fill group list with all groups leaded by players

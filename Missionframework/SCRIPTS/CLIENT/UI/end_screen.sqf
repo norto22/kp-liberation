@@ -151,6 +151,14 @@ if (dialog) then {sleep 3};
 [693, localize "STR_STATS_END1"] call _addReportLine;
 [694, localize "STR_STATS_END2"] call _addReportLine;
 [696, localize "STR_STATS_END3"] call _addReportLine;
+[] call _cleanPage;
+
+// Ninth page - personal progression recap
+private _progEntry = [getPlayerUID player] call KPLIB_fnc_progGetPlayerData;
+private _progPoints = _progEntry select 1;
+private _progTierName = KPLIB_prog_tier_names select ([_progPoints] call KPLIB_fnc_progGetTier);
+[691, format [localize "STR_KPLIB_PROG_RECAP_RANK", _progTierName]] call _addReportLine;
+[692, format [localize "STR_KPLIB_PROG_RECAP_SCORE", _progPoints], true] call _addReportLine;
 
 waitUntil {!dialog};
 cinematic_camera_started = false;

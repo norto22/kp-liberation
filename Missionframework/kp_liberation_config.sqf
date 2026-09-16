@@ -250,6 +250,27 @@ KPLIB_cr_sector_gain = 5;                                       // Civil Reputat
 KPLIB_cr_wounded_chance = 35;                                   // Chance (0-100) that there are wounded civilians right after capturing a sector.
 KPLIB_cr_wounded_gain = 2;                                      // Civil Reputation gain for providing medical assistance for wounded civilians.
 
+KPLIB_prog_tier_names = ["Recruit", "Private", "Corporal", "Sergeant", "Lieutenant", "Veteran"];  // Custom veterancy tier names, in ascending order.
+KPLIB_prog_tier_thresholds = [0, 50, 150, 350, 700, 1200];              // Minimum points to reach each tier in KPLIB_prog_tier_names.
+KPLIB_prog_points_opfor_soldier = 2;                                    // Points for a player-attributed OPFOR soldier kill.
+KPLIB_prog_points_opfor_vehicle = 5;                                    // Points for a player-attributed OPFOR vehicle kill.
+KPLIB_prog_points_secondary_objective = 10;                             // Points per nearby player on secondary objective completion.
+KPLIB_prog_points_sector_captured = 10;                                 // Points per nearby player on sector capture.
+KPLIB_prog_points_fob_built = 5;                                        // Points per nearby player when a FOB is built.
+KPLIB_prog_points_prisoner_captured = 3;                                // Points per nearby player on prisoner capture.
+KPLIB_prog_points_vehicle_recycled = 2;                                 // Points per nearby player on vehicle recycling.
+KPLIB_prog_points_logi_delivery = 8;                                    // Points for the player who completes a logi truck delivery.
+KPLIB_prog_points_medical = 5;                                          // Points per successful ACE medical treatment/revive.
+KPLIB_prog_points_playtime_interval = 600;                              // Seconds between playtime trickle awards.
+KPLIB_prog_points_playtime_amount = 1;                                  // Points awarded per interval to each connected player.
+KPLIB_prog_penalty_civilian_kill = 10;                                  // Points lost for killing a civilian.
+KPLIB_prog_penalty_teamkill = 15;                                       // Points lost for a teamkill.
+KPLIB_prog_penalty_vehicle_abandoned = 10;                              // Points lost when a flagged-abandoned vehicle is destroyed/lost.
+KPLIB_prog_award_radius = 150;                                          // Radius for "nearby players" credit on scripted completion events.
+KPLIB_prog_nearby_award_cap = 6;                                        // Max players credited per nearby-award event (prevents a full squad farming a tiny event unlimited times).
+KPLIB_prog_skill_baseline = 0.5;                                        // Baseline value (0-1) for aimingAccuracy/spotDistance/courage before any tier bonus.
+KPLIB_prog_abandon_seconds = 1500;                                      // Seconds a crewless, owned vehicle must stay in contested territory before being flagged as abandoned.
+
 KPLIB_civinfo_min = 5400;                                       // Civil Informant minimum spawn time. (seconds)
 KPLIB_civinfo_max = 10800;                                      // Civil Informant maximum spawn time. (seconds)
 KPLIB_civinfo_chance = 75;                                      // Civil Informant spawn chance. (0-100)

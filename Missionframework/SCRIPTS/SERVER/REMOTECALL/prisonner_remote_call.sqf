@@ -10,6 +10,7 @@ if (isServer) then {
     };
     resources_intel = resources_intel + ( _yield + (round (random _yield)));
     stats_prisoners_captured = stats_prisoners_captured + 1;
+    [getPos _unit, KPLIB_prog_points_prisoner_captured] call KPLIB_fnc_progAwardNearby;
 
     [0] remoteExec ["remote_call_intel"];
 };

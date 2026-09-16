@@ -57,6 +57,7 @@ class KPLIB_dialog {
 
         class KP_NoRanks: KP_LabelPlayer {
             idc = 758037;
+            show = 0;
             style = 2;
             colorText[] = {0.8, 0, 0, 0.75};
             text = "$STR_KPLIB_NORANKS";
