@@ -549,6 +549,9 @@ if ((_lockedVehCount < (count sectors_military)) && (_lockedVehCount < (count el
 
 publicVariable "KPLIB_vehicle_to_military_base_links";
 publicVariable "KPLIB_permissions";
+// Publish loaded player-menu data before clients start using it (including JIP).
+publicVariable "KPLIB_progression";
+publicVariable "stats_playtime";
 save_is_loaded = true; publicVariable "save_is_loaded";
 
 [format ["----- Saved data loaded - Time needed: %1 seconds", diag_tickTime - _start], "SAVE"] call KPLIB_fnc_log;

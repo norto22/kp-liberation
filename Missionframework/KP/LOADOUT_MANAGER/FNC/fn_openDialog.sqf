@@ -44,6 +44,22 @@ if (KPLIB_KPR) then {
     [] call KPLIB_fnc_progShowRankData;
 };
 
+// Refresh only this dialog instance; closing it ends the updater, even on a quick reopen.
+[_dialog] spawn {
+    disableSerialization;
+    params ["_dialog"];
+
+    while {!isNull _dialog} do {
+        sleep 1;
+        if (isNull _dialog) exitWith {};
+        if (KPLIB_KPR) then {
+            [] call KPLIB_fnc_showRankData;
+        } else {
+            [] call KPLIB_fnc_progShowRankData;
+        };
+    };
+};
+
 // Fill group list with all groups leaded by players
 {
     if (player in units _x) then {

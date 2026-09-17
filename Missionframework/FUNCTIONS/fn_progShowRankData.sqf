@@ -19,7 +19,9 @@
 */
 
 // Dialog controls
+disableSerialization;
 private _dialog = findDisplay 75803;
+if (isNull _dialog) exitWith {false};
 private _ctrlRank = _dialog displayCtrl 758032;
 private _ctrlScore = _dialog displayCtrl 758034;
 private _ctrlPlaytime = _dialog displayCtrl 758036;
@@ -34,6 +36,7 @@ private _progPoints = _progEntry select 1;
 
 _ctrlRank ctrlSetText (KPLIB_prog_tier_names select ([_progPoints] call KPLIB_fnc_progGetTier));
 _ctrlScore ctrlSetText str _progPoints;
-_ctrlPlaytime ctrlSetText ([stats_playtime] call KPLIB_fnc_secondsToTimer);
+// This is the saved campaign clock, not an individual player's session time.
+_ctrlPlaytime ctrlSetText ([missionNamespace getVariable ["stats_playtime", 0]] call KPLIB_fnc_secondsToTimer);
 
 true

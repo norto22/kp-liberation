@@ -71,6 +71,18 @@ Regression checks (require Arma; static checks do not verify AI flight):
 - After a damage abort starts, repair the helicopter and request extraction: it must still finish returning to the FOB. With a healthy taxi on standby, let the original caller respawn and verify another member of the requesting squad can still recall it.
 - Request pickup beside a large warehouse and extraction on a building/bridge: the selected landing site must be clear terrain nearby, never the roof. Repeat near trees, a parked truck, steep ground, and water. With no suitable site within 300 m, pickup must be rejected without charging fuel. Move a vehicle into the selected site during descent and verify the landing order is cancelled. Two simultaneous taxis must not reserve overlapping landing footprints.
 
+## Testing player progression in the KP Player Menu
+
+The built-in rank and score use your Steam UID's saved campaign progression. Recruit covers 0–49 points; Private starts at 50. The displayed playtime is the **whole campaign's saved running time**, not your personal connection time. Rank, score, and time refresh once per second while the menu is open. If the optional **KP Ranks** addon is loaded, the menu continues to show that addon's rank, score, and personal playtime instead.
+
+Rebuild the mission with `npx gulp` in `_tools` and restart it with the existing campaign save. Verify these cases in Arma; static checks cannot exercise multiplayer synchronization or the dialog:
+
+- Without KP Ranks, open the menu on a remote client immediately after loading a save with a known score of at least 50. The saved rank and score should appear before earning any new points, and playtime should advance while the menu stays open.
+- Join an already-running server and repeat the check. A new player should start at Recruit / 0 without script errors or changes to another player's score.
+- Leave the menu open on one client while a nearby teammate captures a sector within 150 m. Its score should update without reopening the menu; crossing 50 points should change Recruit to Private.
+- Close and immediately reopen the menu several times, then respawn and reopen it. Rank and time should continue updating without script errors. Repeat on a hosted server as well as a dedicated server.
+- Save and restart the campaign. Confirm the score and campaign clock resume from the save. With KP Ranks installed, confirm the menu still uses the addon's values and refreshes them while open.
+
 ## Needed Mods
 These mods are needed if you want to use the prepackaged missionfiles from the release tab or Steam Workshop.
 You can play every map without any mods (only the maps themself) if you set the preset to custom in the file `kp_liberation_config`.
