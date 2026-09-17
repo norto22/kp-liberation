@@ -11,6 +11,7 @@ private _pilot = driver _taxi;
 private _grp = group _pilot;
 private _flightCrew = crew _taxi;
 private _damageAbort = false;
+private _landingPad = objNull;
 _taxi setVariable ["KPLIB_taxi_recall", []];
 
 // Enemy contacts must not replace the transport route with attack runs.
@@ -43,6 +44,8 @@ private _fnc_clearWaypoints = {
 private _fnc_flyTo = {
     params ["_targetPos", ["_height", 100], ["_returning", false]];
     if ([_returning] call _fnc_interrupted) exitWith {false};
+    deleteVehicle _landingPad;
+    _landingPad = objNull;
     _pilot enableAI "MOVE";
     _taxi land "NONE";
     _taxi engineOn true;
@@ -67,19 +70,32 @@ private _fnc_flyTo = {
 };
 private _fnc_land = {
     params ["_pos", ["_returning", false]];
-    private _pad = createVehicle ["Land_HelipadEmpty_F", _pos, [], 0, "CAN_COLLIDE"];
-    private _arrived = [_pos, 30, _returning] call _fnc_flyTo;
+    if ([_returning] call _fnc_interrupted) exitWith {false};
+    deleteVehicle _landingPad;
+    _landingPad = createVehicle ["Land_HelipadEmpty_F", _pos, [], 0, "CAN_COLLIDE"];
+    _pilot enableAI "MOVE";
+    _taxi land "NONE";
+    _taxi engineOn true;
+    [] call _fnc_clearWaypoints;
+    _grp setSpeedMode "NORMAL";
+
+    // Give the landing autopilot the pad immediately. A MOVE waypoint can finish
+    // outside our 30 m arrival radius and leave the helicopter hovering forever
+    // before the old code ever issued land "LAND". Do not mix doMove/doStop or a
+    // forced hover-height order into this approach.
+    private _accepted = _taxi landAt [_landingPad, "Land"];
+    [format ["Taxi %1 landing at %2; accepted: %3", netId _taxi, _pos, _accepted], "TAXI"] call KPLIB_fnc_log;
     private _landed = false;
-    if (_arrived) then {
-        _taxi land "LAND";
-        private _deadline = time + KPLIB_taxi_hover_timeout;
+    if (_accepted) then {
+        private _deadline = time + KPLIB_taxi_hover_timeout + ((_taxi distance2D _pos) / 20);
         waitUntil {
             sleep 1;
-            _landed = isTouchingGround _taxi && {abs speed _taxi < 2};
+            _landed = isTouchingGround _taxi && {abs speed _taxi < 2} && {_taxi distance2D _pos < 50};
             _landed || ([_returning] call _fnc_interrupted) || time > _deadline
         };
     };
-    deleteVehicle _pad;
+    [format ["Taxi %1 landing ended; touchdown: %2, distance: %3 m, height: %4 m", netId _taxi, _landed, round (_taxi distance2D _pos), round ((getPosATL _taxi) select 2)], "TAXI"] call KPLIB_fnc_log;
+    // Keep the pad while boarding/unloading; the next flight or cleanup owns it.
     _landed && {!([_returning] call _fnc_interrupted)}
 };
 private _fnc_board = {
@@ -240,6 +256,7 @@ if (_home && {([] call _fnc_passengers) isEqualTo []} && {[] call _fnc_flyable})
     [_spawnPos, 150, true] call _fnc_flyTo;
 };
 private _lost = !([] call _fnc_flyable);
+deleteVehicle _landingPad;
 KPLIB_taxi_slots_active = (KPLIB_taxi_slots_active - 1) max 0;
 publicVariable "KPLIB_taxi_slots_active";
 _taxi setVariable ["KPLIB_taxi_active", false, true];

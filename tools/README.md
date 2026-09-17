@@ -35,6 +35,8 @@ python tools/namespace_keys.py  # print the key inventory
 
 ### Updating the SQF lint baseline
 
+The taxi landing code uses the [Arma 3 2.18 `landAt` helipad overload](https://community.bistudio.com/wiki/landAt), which accepts `[helipad, "Land"]`. The installed analyzer only knows the older object/number overloads; its argument-type finding for this call is explicitly baselined.
+
 The baseline (`sqf_lint_baseline.txt`) records the *expected* sqflint findings
 on the current tree (legacy warnings + sqflint's false-positives on modern
 commands like `findIf`). Regenerate it after an intentional, reviewed change:

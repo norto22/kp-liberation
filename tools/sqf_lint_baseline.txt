@@ -227,6 +227,7 @@ SCRIPTS/CLIENT/UI/ui_manager.sqf	warning	Local variable "_visibleMap" assigned t
 SCRIPTS/CLIENT/UI/ui_manager.sqf	warning	Local variable "_visibleMap" is not from this scope (not private)
 SCRIPTS/CLIENT/UI/ui_manager.sqf	warning	Variable "_attacked_string" not used
 SCRIPTS/SERVER/AI/building_defence_ai.sqf	warning	Local variable "_dir" assigned to an outer scope (not private)
+SCRIPTS/SERVER/AI/taxi_flight.sqf	error	Binary operator "landat" arguments must be [(Object,Object),(Object,Number)] (lhs is Anything, rhs is Array)
 SCRIPTS/SERVER/AI/taxi_flight.sqf	error	can't interpret statement (missing ;?): <Anything(<Anything>)> <Variable(findIf)> <Code({_x select 5})>
 SCRIPTS/SERVER/AI/taxi_flight.sqf	error	can't interpret statement (missing ;?): <Variable(_ropes)> <Variable(findIf)> <Code({_x select 5})>
 SCRIPTS/SERVER/AI/taxi_flight.sqf	warning	Local variable "_x" is not from this scope (not private)
