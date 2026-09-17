@@ -7,6 +7,8 @@ private ["_dialog", "_fobPositions"];
 if (isNil "KPLIB_taxi_class_choice") then { KPLIB_taxi_class_choice = "light"; };
 
 _dialog = createDialog "liberation_taxi";
+if (!_dialog) exitWith {["STR_TAXI_MSG_DIALOG_FAILED", [], true] call taxi_status_local;};
+["STR_TAXI_MSG_SELECT_LZ"] call taxi_status_local;
 taxi_call_confirmed = 0;
 taxi_lz_position = [0, 0, 0];
 _fobPositions = +KPLIB_all_fobs;
@@ -56,5 +58,6 @@ if ( dialog ) then {
 
 if (taxi_call_confirmed == 1 && alive player && {_selectedFob >= 0} && {_selectedFob < count _fobPositions}) then {
     private _fobPos = _fobPositions select _selectedFob;
+    ["STR_TAXI_MSG_REQUESTING"] call taxi_status_local;
     [_fobPos, KPLIB_taxi_class_choice, taxi_lz_position] remoteExec ["taxi_call_remote_call", 2];
 };

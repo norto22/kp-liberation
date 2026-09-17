@@ -2,6 +2,7 @@
 private _readiness = compile preprocessFileLineNumbers "Missionframework/FUNCTIONS/fn_taxiRopeReadiness.sqf";
 private _cases = [
     ["reported 34 m hover, 31 m from LZ", [[34.2, 34.4], 36.6, 34, 0.01, 31], [true, "ready", 34.9]],
+    ["32 m target works with stock 36 m ropes", [[32.2, 32.4], 36, 32, 0.01, 31], [true, "ready", 32.9]],
     ["above old 26 m ceiling", [[27], 30, 27, 0, 0], [true, "ready", 27.5]],
     ["exact rope reach including slack", [[20, 21], 21.5, 20, 0, 0], [true, "ready", 21.5]],
     ["longest hook must reach", [[20, 22], 21.5, 20, 0, 0], [false, "rope_too_short", 22.5]],
@@ -87,4 +88,84 @@ private _clearCases = [
         diag_log format ["TAXI_ROPE_FAIL: cleanup %1; expected %2; got %3", _name, _expected, if (isNil "_actual") then {"nil"} else {_actual}];
     };
 } forEach _clearCases;
-diag_log format ["TAXI_ROPE_COMPLETE: %1 cases, %2 failures", count _cases + count _clearCases, _failed];
+private _hoverVelocity = compile preprocessFileLineNumbers "Missionframework/FUNCTIONS/fn_taxiHoverVelocity.sqf";
+private _infinity = 1e38 * 10;
+private _hoverCases = [
+    ["rest at target", [[0,0,0], [0,0,0], 0.02], [0,0,0]],
+    ["descent starts with bounded acceleration", [[0,0,-15], [0,0,0], 0.02], [0,0,-0.04]],
+    ["climb starts with bounded acceleration", [[0,0,4], [0,0,0], 0.1], [0,0,0.2]],
+    ["proportional correction near target", [[0,0,0.1], [0,0,0], 0.1], [0,0,0.06]],
+    ["large timestep capped", [[0,0,-15], [0,0,0], 5], [0,0,-0.2]],
+    ["zero timestep holds previous command", [[0,0,-15], [0.5,0,0], 0], [0.5,0,0]],
+    ["negative timestep clamped to zero", [[0,0,-15], [0.5,0,0], -1], [0.5,0,0]],
+    ["direction reversal slews previous command", [[0,0,-15], [0,0,2], 0.1], [0,0,1.8]],
+    ["out-of-bounds previous command fails to rest", [[0,0,1], [0,0,3], 0.1], [0,0,0]],
+    ["very large finite error remains bounded", [[0,0,1e38], [0,0,0], 0.1], [0,0,0.2]],
+    ["missing argument", [[0,0,0], [0,0,0]], [0,0,0]],
+    ["nonarray input", false, [0,0,0]],
+    ["invalid error vector size", [[0,0], [0,0,0], 0.1], [0,0,0]],
+    ["invalid previous command size", [[0,0,1], [0,0], 0.1], [0,0,0]],
+    ["invalid error component", [[0,"bad",1], [0,0,0], 0.1], [0,0,0]],
+    ["invalid previous component", [[0,0,1], [0,false,0], 0.1], [0,0,0]],
+    ["undefined error vector", [nil, [0,0,0], 0.1], [0,0,0]],
+    ["undefined previous command", [[0,0,1], nil, 0.1], [0,0,0]],
+    ["undefined error component", [[0,nil,1], [0,0,0], 0.1], [0,0,0]],
+    ["undefined timestep", [[0,0,1], [0,0,0], nil], [0,0,0]],
+    ["nonnumeric timestep", [[0,0,1], [0,0,0], "0.1"], [0,0,0]],
+    ["infinite error", [[0,0,_infinity], [0,0,0], 0.1], [0,0,0]],
+    ["infinite previous command", [[0,0,1], [0,0,_infinity], 0.1], [0,0,0]],
+    ["infinite timestep", [[0,0,1], [0,0,0], _infinity], [0,0,0]],
+    ["NaN error", [[0,0,_infinity - _infinity], [0,0,0], 0.1], [0,0,0]]
+];
+{
+    _x params ["_name", "_input", "_expected"];
+    private _actual = _input call _hoverVelocity;
+    private _passed = !isNil "_actual" && {_actual isEqualType []} && {count _actual == 3};
+    if (_passed) then {_passed = vectorMagnitude (_actual vectorDiff _expected) < 0.00001;};
+    if (_passed) then {
+        diag_log format ["TAXI_ROPE_PASS: hover %1", _name];
+    } else {
+        _failed = _failed + 1;
+        diag_log format ["TAXI_ROPE_FAIL: hover %1; expected %2; got %3", _name, _expected, if (isNil "_actual") then {"nil"} else {_actual}];
+    };
+} forEach _hoverCases;
+
+// Kinematic replay of control math only: position += command * dt.
+// This does not simulate Arma physics, aircraft AI forces, or real hover tracking.
+private _replayCases = [
+    ["47 to 32 m at 50 Hz", [0,0,47], 0.02],
+    ["47 to 32 m at 10 Hz", [0,0,47], 0.1],
+    ["34 to 32 m at 50 Hz", [0,0,34], 0.02],
+    ["34 to 32 m at 10 Hz", [0,0,34], 0.1],
+    ["climb from 28 to 32 m", [0,0,28], 0.02],
+    ["horizontal recovery", [8,-6,32], 0.02],
+    ["combined horizontal and vertical recovery", [8,-6,47], 0.1]
+];
+{
+    _x params ["_name", "_position", "_dt"];
+    private _target = [0,0,32];
+    private _previous = [0,0,0];
+    private _passed = true;
+    for "_step" from 1 to (30 / _dt) do {
+        private _error = _target vectorDiff _position;
+        private _command = [_error, _previous, _dt] call _hoverVelocity;
+        if (isNil "_command") exitWith {_passed = false;};
+        if (vectorMagnitude _command > 2.00001
+            || {vectorMagnitude (_command vectorDiff _previous) > (2 * _dt + 0.00001)}) exitWith {_passed = false;};
+        private _next = _position vectorAdd (_command vectorMultiply _dt);
+        private _nextError = _target vectorDiff _next;
+        for "_axis" from 0 to 2 do {
+            if ((_error select _axis) * (_nextError select _axis) < -0.000001) then {_passed = false;};
+        };
+        _position = _next;
+        _previous = _command;
+    };
+    _passed = _passed && {vectorMagnitude (_target vectorDiff _position) <= 0.25};
+    if (_passed) then {
+        diag_log format ["TAXI_ROPE_PASS: kinematic replay %1", _name];
+    } else {
+        _failed = _failed + 1;
+        diag_log format ["TAXI_ROPE_FAIL: kinematic replay %1; final position %2", _name, _position];
+    };
+} forEach _replayCases;
+diag_log format ["TAXI_ROPE_COMPLETE: %1 cases, %2 failures", count _cases + count _clearCases + count _hoverCases + count _replayCases, _failed];

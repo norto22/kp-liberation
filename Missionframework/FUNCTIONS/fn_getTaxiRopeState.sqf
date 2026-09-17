@@ -36,5 +36,10 @@ private _speed = vectorMagnitude velocity _taxi;
 private _height = (getPosATL _taxi) select 2;
 private _distance = _taxi distance2D _lzPos;
 private _result = [_hookHeights, _availableLength, _height, _speed, _distance] call KPLIB_fnc_taxiRopeReadiness;
+private _targetHeight = _taxi getVariable ["KPLIB_taxi_hover_target_height", KPLIB_taxi_hover_height];
+if (_result select 0 && {abs (_height - _targetHeight) > 0.75}) then {
+    _result set [0, false];
+    _result set [1, "hover_altitude"];
+};
 _result append [_availableLength, _speed, _height, _distance];
 _result

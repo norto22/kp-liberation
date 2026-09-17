@@ -20,7 +20,7 @@ def main() -> int:
         "--no-execute-print",
         "--no-work-print",
         "--max-runtime",
-        "10000",
+        "30000",
         "--virtual",
         f"{root}|/",
         "--input-sqf",
@@ -28,7 +28,7 @@ def main() -> int:
     ]
     try:
         result = subprocess.run(
-            command, cwd=root, capture_output=True, text=True, timeout=20, check=False
+            command, cwd=root, capture_output=True, text=True, timeout=40, check=False
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         print(f"Unable to run SQF-VM: {exc}")

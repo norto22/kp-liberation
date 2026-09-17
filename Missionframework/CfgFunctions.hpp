@@ -69,6 +69,7 @@ class KPLIB {
         class isClassUAV                {};
         class isRadio                   {};
         class isTaxiLandingClear        {};
+        class isTaxiHoverPathClear       {};
         class log                       {};
         class potatoScan                {};
         class progAddPoints             {};
@@ -80,7 +81,10 @@ class KPLIB {
         class protectObject             {};
         class secondsToTimer            {};
         class taxiRopeReadiness          {};
+        class taxiNotify                 {};
+        class taxiHoverVelocity          {};
         class taxiRopesClear             {};
+        class startTaxiHover             {};
         class selectStrongpointBuildings {};
         class setDiscordState           {};
         class setFobMass                {};

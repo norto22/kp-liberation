@@ -221,6 +221,7 @@ KPLIB_taxi_fuel_cost_min = 5;                                           // Minim
 KPLIB_taxi_lz_min_range = 300;                                          // Minimum metres the LZ must be from the departure FOB.
 KPLIB_taxi_lz_max_range = 9000;                                         // Maximum metres the LZ may be from the departure FOB.
 KPLIB_taxi_rope_clear_grace = 3;                                        // Seconds to hold position after ropes go clear before actually departing.
+KPLIB_taxi_hover_height = 32;                                          // Measured terrain-relative insertion hold height, in metres; stock ACE ropes remain unchanged.
 KPLIB_taxi_hover_timeout = 300;                                         // Safety-net seconds to hover before auto-departing even if ropes never clear.
 KPLIB_taxi_respawn_cooldown = 600;                                      // Seconds before a lost taxi airframe's pool slot becomes available again.
 KPLIB_taxi_alertness_chance = 60;                                       // 0-100 percent chance a completed taxi insertion spawns a hostile squad near the LZ.
