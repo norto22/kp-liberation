@@ -6,6 +6,7 @@ building_defence_ai = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\AI\
 patrol_ai = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\AI\patrol_ai.sqf";
 prisonner_ai = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\AI\prisonner_ai.sqf";
 troup_transport = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\AI\troup_transport.sqf";
+taxi_flight = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\AI\taxi_flight.sqf";
 
 // Battlegroup
 spawn_air = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\BATTLEGROUP\spawn_air.sqf";
@@ -34,9 +35,11 @@ wait_to_spawn_sector = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\SE
 
 // Globals
 active_sectors = []; publicVariable "active_sectors";
+KPLIB_sector_strongpoints = []; publicVariable "KPLIB_sector_strongpoints";
 
 execVM "SCRIPTS\SERVER\BASE\startgame.sqf";
 execVM "SCRIPTS\SERVER\BASE\huron_manager.sqf";
+execVM "SCRIPTS\SERVER\BASE\taxi_manager.sqf";
 execVM "SCRIPTS\SERVER\BASE\startvehicle_spawn.sqf";
 [] call KPLIB_fnc_createSuppModules;
 execVM "SCRIPTS\SERVER\BATTLEGROUP\counter_battlegroup.sqf";
@@ -48,6 +51,7 @@ if (!KPLIB_fog_param) then {execVM "SCRIPTS\SERVER\GAME\set_fog.sqf";};
 execVM "SCRIPTS\SERVER\GAME\manage_time.sqf";
 execVM "SCRIPTS\SERVER\GAME\manage_weather.sqf";
 execVM "SCRIPTS\SERVER\GAME\playtime.sqf";
+execVM "SCRIPTS\SERVER\GAME\prog_playtime.sqf";
 execVM "SCRIPTS\SERVER\GAME\save_manager.sqf";
 execVM "SCRIPTS\SERVER\GAME\spawn_radio_towers.sqf";
 execVM "SCRIPTS\SERVER\GAME\synchronise_vars.sqf";

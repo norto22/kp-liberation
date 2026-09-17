@@ -93,6 +93,8 @@ KPLIB_production = [];
 KPLIB_production_markers = [];
 // Radio tower classnames per radio tower sector
 KPLIB_sectorTowers = [];
+// Per-player veterancy/progression table, entries are [uid, points]
+KPLIB_progression = [];
 // Sectors under attack
 KPLIB_sectorsUnderAttack = [];
 // Global Intel resource
@@ -155,6 +157,7 @@ stats_spartan_respawns = 0;
 stats_supplies_produced = 0;
 stats_supplies_spent = 0;
 stats_vehicles_recycled = 0;
+stats_taxi_insertions = 0;
 
 // Prevent saving/duplication of objects placed in Eden
 {
@@ -196,6 +199,7 @@ if (!isNil "_saveData") then {
         _allMines                                   = _saveData param [19, []];
         _allCrates                                  = _saveData param [20, []];
         KPLIB_sectorTowers                          = _saveData param [21, []];
+        KPLIB_progression                           = _saveData param [22, []];
 
         stats_ammo_produced                         = _stats select  0;
         stats_ammo_spent                            = _stats select  1;
@@ -236,6 +240,7 @@ if (!isNil "_saveData") then {
         stats_supplies_produced                     = _stats select 36;
         stats_supplies_spent                        = _stats select 37;
         stats_vehicles_recycled                     = _stats select 38;
+        stats_taxi_insertions                       = _stats param [39, 0];
     } else {
         // --- Compatibility for older save data ---
         ["Save data from version: pre 0.96.5", "SAVE"] call KPLIB_fnc_log;
@@ -544,6 +549,9 @@ if ((_lockedVehCount < (count sectors_military)) && (_lockedVehCount < (count el
 
 publicVariable "KPLIB_vehicle_to_military_base_links";
 publicVariable "KPLIB_permissions";
+// Publish loaded player-menu data before clients start using it (including JIP).
+publicVariable "KPLIB_progression";
+publicVariable "stats_playtime";
 save_is_loaded = true; publicVariable "save_is_loaded";
 
 [format ["----- Saved data loaded - Time needed: %1 seconds", diag_tickTime - _start], "SAVE"] call KPLIB_fnc_log;

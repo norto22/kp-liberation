@@ -82,6 +82,7 @@ if (isServer) then {
             // Killed by a player
             if (isplayer _killer) then {
                 stats_opfor_killed_by_players = stats_opfor_killed_by_players + 1;
+                [getPlayerUID _killer, KPLIB_prog_points_opfor_soldier] call KPLIB_fnc_progAddPoints;
             };
         };
 
@@ -92,6 +93,9 @@ if (isServer) then {
             // Killed by BLUFOR
             if (side _killer == KPLIB_side_friendly) then {
                 stats_blufor_teamkills = stats_blufor_teamkills + 1;
+                if (isPlayer _killer) then {
+                    [getPlayerUID _killer, -KPLIB_prog_penalty_teamkill] call KPLIB_fnc_progAddPoints;
+                };
             };
         };
 
@@ -132,6 +136,7 @@ if (isServer) then {
             // Killed by a player
             if (isPlayer _killer) then {
                 stats_civilians_killed_by_players = stats_civilians_killed_by_players + 1;
+                [getPlayerUID _killer, -KPLIB_prog_penalty_civilian_kill] call KPLIB_fnc_progAddPoints;
             };
         };
     } else {
@@ -142,6 +147,7 @@ if (isServer) then {
             // Destroyed by player
             if (isplayer _killer) then {
                 stats_opfor_vehicles_killed_by_players = stats_opfor_vehicles_killed_by_players + 1;
+                [getPlayerUID _killer, KPLIB_prog_points_opfor_vehicle] call KPLIB_fnc_progAddPoints;
             };
         } else {
             // Civilian vehicle casualty
@@ -155,6 +161,14 @@ if (isServer) then {
             } else {
                 // It has to be a BLUFOR vehicle then
                 stats_blufor_vehicles_killed = stats_blufor_vehicles_killed + 1;
+
+                // Player Progression: losing an already-flagged abandoned vehicle penalizes its owner
+                if (_unit getVariable ["KPLIB_abandoned_flagged", false]) then {
+                    private _abandonedOwner = _unit getVariable ["KPLIB_owner", ""];
+                    if (_abandonedOwner != "") then {
+                        [_abandonedOwner, -KPLIB_prog_penalty_vehicle_abandoned] call KPLIB_fnc_progAddPoints;
+                    };
+                };
             };
         };
     };

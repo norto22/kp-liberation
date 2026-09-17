@@ -22,6 +22,7 @@ private _local_capture_size = KPLIB_capture_size;
 private _iedcount = 0;
 private _vehtospawn = [];
 private _managed_units = [];
+private _strongpointUnits = [];
 private _squad1 = [];
 private _squad2 = [];
 private _squad3 = [];
@@ -184,11 +185,55 @@ if ((!(_sector in blufor_sectors)) && (([markerPos _sector, [_opforcount] call K
 
     if (_building_ai_max > 0) then {
         _allbuildings = (nearestObjects [_sectorpos, ["House"], _building_range]) select {alive _x};
+        private _buildingData = _allbuildings apply {[_x, ([_x] call BIS_fnc_buildingPositions)]};
+        private _strongpoints = [];
+
+        if (_sector in sectors_bigtown || _sector in sectors_capture) then {
+            try {
+                _strongpoints = [_buildingData, _sectorpos] call KPLIB_fnc_selectStrongpointBuildings;
+            } catch {
+                [format ["Sector %1 (%2) - ERROR in KPLIB_fnc_selectStrongpointBuildings, skipping strongpoints for this sector: %3", (markerText _sector), _sector, _exception], "SECTORSPAWN"] remoteExecCall ["KPLIB_fnc_log", 2];
+                _strongpoints = [];
+            };
+        };
+
         _buildingpositions = [];
         {
-            _buildingpositions = _buildingpositions + ([_x] call BIS_fnc_buildingPositions);
-        } forEach _allbuildings;
-        if (KPLIB_sectorspawn_debug > 0) then {[format ["Sector %1 (%2) - manage_one_sector found %3 building positions", (markerText _sector), _sector, (count _buildingpositions)], "SECTORSPAWN"] remoteExecCall ["KPLIB_fnc_log", 2];};
+            if !(_x in _strongpoints) then {
+                _buildingpositions = _buildingpositions + (_x select 1);
+            };
+        } forEach _buildingData;
+
+        if !(_strongpoints isEqualTo []) then {
+            try {
+                private _spBudget = round (_building_ai_max * KPLIB_strongpoint_defender_part);
+                _building_ai_max = round (_building_ai_max * KPLIB_strongpoint_scatter_factor);
+
+                private _centralBudget = _spBudget;
+                private _outerBudget = 0;
+                if (count _strongpoints > 1) then {
+                    _centralBudget = round (_spBudget / 2);
+                    _outerBudget = round ((_spBudget - _centralBudget) / ((count _strongpoints) - 1));
+                };
+
+                {
+                    private _amount = _outerBudget;
+                    private _hmgMax = 1;
+                    if (_forEachIndex == 0) then {_amount = _centralBudget; _hmgMax = 2;};
+                    _strongpointUnits = _strongpointUnits + ([_infsquad, _amount, _x, _sector, _hmgMax] call KPLIB_fnc_spawnStrongpointSquad);
+                } forEach _strongpoints;
+
+                _managed_units = _managed_units + _strongpointUnits;
+
+                KPLIB_sector_strongpoints pushBack [_sector, _strongpoints apply {getPosATL (_x select 0)}];
+                publicVariable "KPLIB_sector_strongpoints";
+            } catch {
+                [format ["Sector %1 (%2) - ERROR spawning strongpoint squads: %3", (markerText _sector), _sector, _exception], "SECTORSPAWN"] remoteExecCall ["KPLIB_fnc_log", 2];
+            };
+        };
+
+        if (KPLIB_sectorspawn_debug > 0) then {[format ["Sector %1 (%2) - manage_one_sector found %3 building positions, %4 strongpoint(s), %5 strongpoint defender(s)", (markerText _sector), _sector, (count _buildingpositions), (count _strongpoints), (count _strongpointUnits)], "SECTORSPAWN"] remoteExecCall ["KPLIB_fnc_log", 2];};
+
         if (count _buildingpositions > _minimum_building_positions) then {
             _managed_units = _managed_units + ([_infsquad, _building_ai_max, _buildingpositions, _sector] call KPLIB_fnc_spawnBuildingSquad);
         };
@@ -242,8 +287,16 @@ if ((!(_sector in blufor_sectors)) && (([markerPos _sector, [_opforcount] call K
     private _activationTime = time;
     // sector lifetime loop
     while {!_stopit} do {
+        private _strongpointsClear = true;
+        try {
+            _strongpointsClear = (_strongpointUnits findIf {alive _x && !(captive _x) && ((getPos _x) distance _sectorpos < _local_capture_size)}) == -1;
+        } catch {
+            [format ["Sector %1 (%2) - ERROR in strongpoint capture-gate check, allowing capture: %3", (markerText _sector), _sector, _exception], "SECTORSPAWN"] remoteExecCall ["KPLIB_fnc_log", 2];
+            _strongpointsClear = true;
+        };
+
         // sector was captured
-        if (([_sectorpos, _local_capture_size] call KPLIB_fnc_getSectorOwnership == KPLIB_side_friendly) && (KPLIB_endgame == 0)) then {
+        if (([_sectorpos, _local_capture_size] call KPLIB_fnc_getSectorOwnership == KPLIB_side_friendly) && (KPLIB_endgame == 0) && _strongpointsClear) then {
             if (isServer) then {
                 [_sector] spawn sector_liberated_remote_call;
             } else {
@@ -271,6 +324,9 @@ if ((!(_sector in blufor_sectors)) && (([markerPos _sector, [_opforcount] call K
                     };
                 };
             } forEach _managed_units;
+
+            KPLIB_sector_strongpoints = KPLIB_sector_strongpoints select {(_x select 0) != _sector};
+            publicVariable "KPLIB_sector_strongpoints";
         } else {
             if (([_sectorpos, (([_opforcount] call KPLIB_fnc_getSectorRange) + 300), KPLIB_side_friendly] call KPLIB_fnc_getUnitsCount) == 0) then {
                 _sector_despawn_tickets = _sector_despawn_tickets - 1;
@@ -295,6 +351,9 @@ if ((!(_sector in blufor_sectors)) && (([markerPos _sector, [_opforcount] call K
                         };
                     };
                 } forEach _managed_units;
+
+                KPLIB_sector_strongpoints = KPLIB_sector_strongpoints select {(_x select 0) != _sector};
+                publicVariable "KPLIB_sector_strongpoints";
 
                 _stopit = true;
                 active_sectors = active_sectors - [_sector]; publicVariable "active_sectors";

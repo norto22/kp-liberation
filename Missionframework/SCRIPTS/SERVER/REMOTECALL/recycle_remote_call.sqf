@@ -5,6 +5,7 @@ params ["_object_recycled", "_price_s", "_price_a", "_price_f", "_storage_areas"
 if (isNull _object_recycled) exitWith {};
 if (!(alive _object_recycled)) exitWith {};
 
+private _recycledPos = getPos _object_recycled;
 deleteVehicle _object_recycled;
 if ((_price_s > 0) || (_price_a > 0) || (_price_f > 0)) then {
     {
@@ -54,3 +55,4 @@ if ((_price_s > 0) || (_price_a > 0) || (_price_f > 0)) then {
 };
 please_recalculate = true;
 stats_vehicles_recycled = stats_vehicles_recycled + 1;
+[_recycledPos, KPLIB_prog_points_vehicle_recycled] call KPLIB_fnc_progAwardNearby;

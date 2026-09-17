@@ -258,7 +258,7 @@ while { cinematic_camera_started } do {
                     } else {
                         _nearfobs = KPLIB_all_fobs select {_x distance _position < 300};
                         if ( count _nearfobs > 0 ) then {
-                            _nearest_sector = format [ "FOB %1", military_alphabet select ( KPLIB_all_fobs find ( _nearfobs select 0 ) ) ];
+                            _nearest_sector = format [ "FOB %1", KPLIB_fob_alphabet select ( KPLIB_all_fobs find ( _nearfobs select 0 ) ) ];
                         };
                     };
                 };

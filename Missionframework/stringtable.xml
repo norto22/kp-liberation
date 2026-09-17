@@ -2840,6 +2840,159 @@
             <Korean>공수 낙하</Korean>
             <Czech>HALO SKOK</Czech>
         </Key>
+        <Key ID="STR_TAXI_CALL_ACTION">
+            <Original>Call Taxi</Original>
+        </Key>
+        <Key ID="STR_TAXI_TITLE">
+            <Original>CALL TAXI</Original>
+        </Key>
+        <Key ID="STR_TAXI_FOB_LABEL">
+            <Original>Departure FOB</Original>
+        </Key>
+        <Key ID="STR_TAXI_CLASS_LIGHT">
+            <Original>Light</Original>
+        </Key>
+        <Key ID="STR_TAXI_CLASS_ARMED">
+            <Original>Armed</Original>
+        </Key>
+        <Key ID="STR_TAXI_CALL_BUTTON">
+            <Original>Call</Original>
+        </Key>
+        <Key ID="STR_TAXI_RANGE_HINT">
+            <Original>LZ must be between %1m and %2m from the departure FOB</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_ACTION">
+            <Original>Recall Taxi</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_TITLE">
+            <Original>RECALL TAXI</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_FOB_BUTTON">
+            <Original>Return to FOB</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_LZ_BUTTON">
+            <Original>Extract at LZ</Original>
+        </Key>
+        <Key ID="STR_TAXI_NOTIFICATION_TITLE">
+            <Original>TAXI</Original>
+        </Key>
+        <Key ID="STR_TAXI_NOTIFICATION_ERROR_TITLE">
+            <Original>TAXI ALERT</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_ACCEPTED">
+            <Original>Taxi confirmed. %1 fuel charged. Pickup: FOB grid %2.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_INVALID_FOB">
+            <Original>This FOB is no longer available. Select another departure FOB.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_OUT_OF_RANGE">
+            <Original>Select an LZ between %1 m and %2 m from the departure FOB.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_POOL_BUSY">
+            <Original>All taxis are busy or awaiting replacement. Try again later.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_NO_LANDING_SITE">
+            <Original>No safe pickup site near this FOB. Select another departure FOB.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_NO_SPAWN_SITE">
+            <Original>Taxi cannot be dispatched here. Try another FOB or try again later.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_NO_FUEL">
+            <Original>This FOB needs %1 fuel for the flight; %2 available. Add fuel or select another FOB.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_SPAWN_FAILED">
+            <Original>Taxi dispatch failed. Try again later.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_PICKUP_INBOUND">
+            <Original>Taxi inbound to grid %1. Wait near the pickup site.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_BOARD_NOW">
+            <Original>Taxi ready. Board now and bring your squad.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_BOARDING_TIMEOUT">
+            <Original>Boarding timed out. If already aboard, stay seated for the return flight.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_DEPARTING">
+            <Original>Taxi departing for the selected LZ. Stay aboard.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_PREPARING_ROPES">
+            <Original>Preparing for fast-rope insertion. Stay aboard.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_HOVER_SETTLING">
+            <Original>Taxi settling into a %1 m hover. Wait for the ropes.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_ROPES_DEPLOYING">
+            <Original>Deploying ropes. Stay aboard until your descent starts.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_INSERTION_COMPLETE">
+            <Original>Insertion complete. Recall the taxi when you need extraction.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_RECALL_ACCEPTED">
+            <Original>Extraction requested at grid %1. Wait near the LZ.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_RETURNING">
+            <Original>Taxi returning to the departure FOB. Stay aboard until landing.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_ALREADY_RETURNING">
+            <Original>Your taxi is already returning. Wait for this flight to finish.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_NO_ACTIVE_TAXI">
+            <Original>Your squad has no active taxi. Use Call Taxi to request one.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_LANDING_BLOCKED">
+            <Original>The landing site is blocked. Clear the area around the taxi.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_LANDING_FAILED">
+            <Original>Could not land safely. Select another extraction LZ.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_LANDING_ABORTED">
+            <Original>Landing could not be completed here. Stay aboard and wait for the next taxi update.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_HOVER_FAILED">
+            <Original>Insertion stopped: taxi could not hold a safe hover. Stay aboard.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_HOVER_BLOCKED">
+            <Original>Descent path blocked. Insertion cancelled. Choose another LZ for the next flight.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_ROPE_UNAVAILABLE">
+            <Original>Fast-roping is unavailable here. Stay aboard and wait for the next taxi update.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_CLIENT_ACE_MISSING">
+            <Original>Your game cannot start fast-roping. Check that ACE is enabled before your next flight.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_PASSENGER_FAILED">
+            <Original>A passenger could not fast-rope. Keep the ropes clear and wait for the next taxi update.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_DAMAGE_ABORT">
+            <Original>Taxi damaged. Insertion cancelled.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_AIRCRAFT_LOST">
+            <Original>Taxi lost. Request another taxi if you need transport.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_DISEMBARK">
+            <Original>Taxi landed. Disembark now and bring your squad.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_SERVICE_COMPLETE">
+            <Original>Taxi service complete. Use Call Taxi for another flight.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_LANDING_INSERTION">
+            <Original>This aircraft cannot fast-rope. It will land at the LZ; disembark normally.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_SELECT_LZ">
+            <Original>Select a departure FOB and click a destination on the map to enable Call.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_REQUESTING">
+            <Original>Requesting a taxi. Waiting for confirmation.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_DIALOG_FAILED">
+            <Original>Could not open the taxi request. Close other menus and try again.</Original>
+        </Key>
+        <Key ID="STR_TAXI_MSG_EXTRACT_RANGE">
+            <Original>Select an extraction LZ within %1 m of a FOB.</Original>
+        </Key>
+        <Key ID="STR_TAXI_RECALL_LZ_HINT">
+            <Original>Click a clear extraction point on the map. Close the map to cancel.</Original>
+        </Key>
         <Key ID="STR_PARAM_CLEAR_CARGO">
             <Original>Clear spawned vehicle cargo</Original>
             <German>Inventar gespawnter Fahrzeuge leeren</German>
@@ -6686,6 +6839,9 @@
             <Korean> 파괴된 재투입차량 : %1</Korean>
             <Czech>Počet ztracených Potato 01: %1</Czech>
         </Key>
+        <Key ID="STR_STATS_TAXI">
+            <Original>AI taxi insertions: %1</Original>
+        </Key>
         <Key ID="STR_STATS_RABBITS">
             <Original>Rabbits killed: %1</Original>
             <French>Lapins tués: %1</French>
@@ -7079,6 +7235,15 @@
             <German>KP Ranks Mod nicht geladen</German>
             <Portuguese>O mod KP Ranks não está carregado</Portuguese>
             <Czech>KP Ranks mod nebyl načten</Czech>
+        </Key>
+        <Key ID="STR_KPLIB_PROG_RECAP_RANK">
+            <English>Your Rank: %1</English>
+        </Key>
+        <Key ID="STR_KPLIB_PROG_RECAP_SCORE">
+            <English>Your Score: %1</English>
+        </Key>
+        <Key ID="STR_KPLIB_PROG_ABANDON_WARNING">
+            <English>Your vehicle at %1 has been flagged as abandoned!</English>
         </Key>
         <Key ID="STR_KPLIB_LABELGROUPS">
             <English>Group Management</English>

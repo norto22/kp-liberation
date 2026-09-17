@@ -35,6 +35,10 @@ python tools/namespace_keys.py  # print the key inventory
 
 ### Updating the SQF lint baseline
 
+The taxi landing code uses the [`landAt` helipad overload](https://community.bistudio.com/wiki/landAt) with the Arma 3 2.20 pickup/unload modes and wait time: `[helipad, mode, waitTime]`. The installed analyzer only knows the older object/number overloads; its argument-type finding for this call is explicitly baselined.
+
+The same applies to [`flyInHeight [height, forced]`](https://community.bistudio.com/wiki/flyInHeight), used for the approach altitude request before the measured hover hold takes over. The analyzer only knows the numeric overload.
+
 The baseline (`sqf_lint_baseline.txt`) records the *expected* sqflint findings
 on the current tree (legacy warnings + sqflint's false-positives on modern
 commands like `findIf`). Regenerate it after an intentional, reviewed change:
@@ -78,3 +82,22 @@ load via dynamic paths and can't be traced statically.
 ```bash
 uv run --no-project --with pytest pytest tools/tests -q
 ```
+
+### Taxi SQF regression tests
+
+The focused fast-rope regression suite executes the production SQF decision
+helpers in [SQF-VM](https://github.com/SQFvm/runtime). Install SQF-VM separately,
+then run:
+
+```bash
+python tools/run_taxi_sqf_tests.py --sqfvm /path/to/sqfvm
+```
+
+The suite checks hook reach, the reported 34 m hover, safety boundaries, broken
+ropes with attached riders, hover-control speed/acceleration limits, and invalid
+input. Simple kinematic replays exercise convergence from 47 m and 34 m to a
+32 m target: these test control math only, not Arma physics. CI runs the suite
+using a pinned, checksum-verified SQF-VM release. It returns nonzero on failed
+assertions, script errors, or an incomplete VM run. It does not simulate Arma
+flight, ACE deployment, rope physics, locality, or passengers; those still
+require an in-game check.

@@ -38,6 +38,10 @@ FUNCTIONS/fn_getOpforSpawnPoint.sqf	warning	Local variable "_input0" is not from
 FUNCTIONS/fn_getOpforSpawnPoint.sqf	warning	Local variable "_x" is not from this scope (not private)
 FUNCTIONS/fn_isBigtownActive.sqf	error	can't interpret statement (missing ;?): <Variable(active_sectors)> <Variable(findIf)> <Code({_x in sectors_bigtown})>
 FUNCTIONS/fn_isBigtownActive.sqf	warning	Local variable "_x" is not from this scope (not private)
+FUNCTIONS/fn_progAddPoints.sqf	error	can't interpret statement (missing ;?): <Anything(<Anything>)> <Variable(findIf)> <Code({(_x select 0) isEqualTo _uid})>
+FUNCTIONS/fn_progAddPoints.sqf	warning	Local variable "_x" is not from this scope (not private)
+FUNCTIONS/fn_progGetPlayerData.sqf	error	can't interpret statement (missing ;?): <Anything(<Anything>)> <Variable(findIf)> <Code({(_x select 0) isEqualTo _uid})>
+FUNCTIONS/fn_progGetPlayerData.sqf	warning	Local variable "_x" is not from this scope (not private)
 FUNCTIONS/fn_setLoadout.sqf	error	#define needs at least one argument
 FUNCTIONS/fn_spawnVehicle.sqf	error	Unary operator "units" only accepts argument of types [Group,Object] (rhs is Nothing)
 GREUH/SCRIPTS/GREUH_actionmanager.sqf	warning	Local variable "_idact" assigned to an outer scope (not private)
@@ -72,7 +76,11 @@ GREUH/SCRIPTS/GREUH_squadmanagement.sqf	warning	Local variable "_grp" is not fro
 GREUH/SCRIPTS/GREUH_squadmanagement.sqf	warning	Local variable "_player_group_filtered" assigned to an outer scope (not private)
 GREUH/SCRIPTS/GREUH_squadmanagement.sqf	warning	Local variable "_player_group_filtered" is not from this scope (not private)
 KP/LOADOUT_MANAGER/FNC/fn_openDialog.sqf	warning	Variable "_ctrlNoRanks" not used
+KP/LOADOUT_MANAGER/FNC/fn_openDialog.sqf	warning	Variable "_ctrlPlaytime" not used
+KP/LOADOUT_MANAGER/FNC/fn_openDialog.sqf	warning	Variable "_ctrlRank" not used
+KP/LOADOUT_MANAGER/FNC/fn_openDialog.sqf	warning	Variable "_ctrlScore" not used
 PRESETS/OPFOR/gm_west_win.sqf	error	can't interpret statement (missing ;?): <String("gm_ge_army_m113a1g_apc_milan_win")> <String("gm_ge_army_ch53g")>
+SCRIPTS/CLIENT/ACTIONS/do_recall_taxi.sqf	warning	Local variable "_pos" is not from this scope (not private)
 SCRIPTS/CLIENT/ACTIONS/do_repackage_fob.sqf	error	can't interpret statement (missing ;?): <Variable(KPLIB_clearances)> <Variable(findIf)> <Code({(_x select 0) isEqualTo _fob})>
 SCRIPTS/CLIENT/ACTIONS/do_repackage_fob.sqf	warning	Local variable "_x" is not from this scope (not private)
 SCRIPTS/CLIENT/AMMOBOXES/ammobox_action_manager.sqf	warning	Local variable "_area_load" assigned to an outer scope (not private)
@@ -157,6 +165,8 @@ SCRIPTS/CLIENT/COMMANDER/open_logistic.sqf	warning	Variable "_dialog" not used
 SCRIPTS/CLIENT/COMMANDER/open_permissions.sqf	warning	Variable "_dialog" not used
 SCRIPTS/CLIENT/COMMANDER/open_production.sqf	warning	Variable "_dialog" not used
 SCRIPTS/CLIENT/COMMANDER/open_production.sqf	warning	Variable "_saveChanges" not used
+SCRIPTS/CLIENT/MARKERS/empty_vehicles_marker.sqf	error	can't interpret statement (missing ;?): <Variable(KPLIB_all_fobs)> <Variable(findIf)> <Code({_veh distance2d _x < KPLIB_fob_range})>
+SCRIPTS/CLIENT/MARKERS/empty_vehicles_marker.sqf	error	can't interpret statement (missing ;?): <Variable(blufor_sectors)> <Variable(findIf)> <Code({_veh distance2d (markerPos _x) < KPLIB_capture_size})>
 SCRIPTS/CLIENT/MARKERS/empty_vehicles_marker.sqf	warning	Local variable "_support_to_skip" assigned to an outer scope (not private)
 SCRIPTS/CLIENT/MARKERS/empty_vehicles_marker.sqf	warning	Local variable "_support_to_skip" is not from this scope (not private)
 SCRIPTS/CLIENT/MARKERS/empty_vehicles_marker.sqf	warning	Variable "_supporttomark" not used
@@ -190,6 +200,8 @@ SCRIPTS/CLIENT/REMOTECALL/remote_call_prisonner.sqf	warning	Local variable "_tar
 SCRIPTS/CLIENT/REMOTECALL/remote_call_prisonner.sqf	warning	Local variable "_target_sector" is not from this scope (not private)
 SCRIPTS/CLIENT/REMOTECALL/remote_call_prisonner.sqf	warning	Local variable "_x" is not from this scope (not private)
 SCRIPTS/CLIENT/REMOTECALL/remote_call_prisonner.sqf	warning	Variable "_nearblufor" not used
+SCRIPTS/CLIENT/SPAWN/do_call_taxi.sqf	warning	Variable "_dialog" not used
+SCRIPTS/CLIENT/SPAWN/do_call_taxi.sqf	warning	Variable "_fobPositions" not used
 SCRIPTS/CLIENT/SPAWN/do_halo.sqf	warning	Local variable "_pos" is not from this scope (not private)
 SCRIPTS/CLIENT/SPAWN/do_halo.sqf	warning	Variable "_dialog" not used
 SCRIPTS/CLIENT/UI/cinematic_camera.sqf	warning	Local variable "_activeplayers" assigned to an outer scope (not private)
@@ -215,8 +227,16 @@ SCRIPTS/CLIENT/UI/ui_manager.sqf	warning	Local variable "_visibleMap" assigned t
 SCRIPTS/CLIENT/UI/ui_manager.sqf	warning	Local variable "_visibleMap" is not from this scope (not private)
 SCRIPTS/CLIENT/UI/ui_manager.sqf	warning	Variable "_attacked_string" not used
 SCRIPTS/SERVER/AI/building_defence_ai.sqf	warning	Local variable "_dir" assigned to an outer scope (not private)
+SCRIPTS/SERVER/AI/taxi_flight.sqf	error	Binary operator "flyinheight" arguments must be [(Object,Number)] (lhs is Anything, rhs is Array)
+SCRIPTS/SERVER/AI/taxi_flight.sqf	error	Binary operator "landat" arguments must be [(Object,Object),(Object,Number)] (lhs is Anything, rhs is Array)
+SCRIPTS/SERVER/AI/taxi_flight.sqf	error	can't interpret statement (missing ;?): <Anything(<Anything>)> <Variable(findIf)> <Code({_x select 5})>
+SCRIPTS/SERVER/AI/taxi_flight.sqf	error	can't interpret statement (missing ;?): <Variable(_ropes)> <Variable(findIf)> <Code({_x select 5})>
+SCRIPTS/SERVER/AI/taxi_flight.sqf	warning	Local variable "_x" is not from this scope (not private)
+SCRIPTS/SERVER/AI/taxi_flight.sqf	warning	Variable "_fobPos" not used
 SCRIPTS/SERVER/AI/troup_transport.sqf	warning	Local variable "_infGrp" assigned to an outer scope (not private)
 SCRIPTS/SERVER/AI/troup_transport.sqf	warning	Local variable "_infGrp" is not from this scope (not private)
+SCRIPTS/SERVER/ASYMMETRIC/CONVOY/logistic_convoy_watchdog.sqf	error	can't interpret statement (missing ;?): <Variable(KPLIB_convoy_trucks)> <Variable(findIf)> <Code({(_x select 0) == _convoyIndex})>
+SCRIPTS/SERVER/ASYMMETRIC/CONVOY/logistic_convoy_watchdog.sqf	warning	Local variable "_x" is not from this scope (not private)
 SCRIPTS/SERVER/ASYMMETRIC/IED/manage_asymIED.sqf	warning	Local variable "_nearinfantry" assigned to an outer scope (not private)
 SCRIPTS/SERVER/ASYMMETRIC/IED/manage_asymIED.sqf	warning	Local variable "_nearinfantry" is not from this scope (not private)
 SCRIPTS/SERVER/ASYMMETRIC/IED/manage_asymIED.sqf	warning	Local variable "_nearvehicles" assigned to an outer scope (not private)
@@ -276,6 +296,10 @@ SCRIPTS/SERVER/REMOTECALL/build_remote_call.sqf	warning	Local variable "_i" assi
 SCRIPTS/SERVER/REMOTECALL/build_remote_call.sqf	warning	Local variable "_i" is not from this scope (not private)
 SCRIPTS/SERVER/REMOTECALL/intel_remote_call.sqf	warning	Local variable "_intel_yield" assigned to an outer scope (not private)
 SCRIPTS/SERVER/REMOTECALL/intel_remote_call.sqf	warning	Local variable "_intel_yield" is not from this scope (not private)
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	Binary operator "!=" arguments must be [(Number,Number),(String,String),(Object,Object),(Group,Group),(Side,Side),(String,String),(Config,Config),(Display,Display),(Control,Control),(TeamMember,TeamMember),(NetObject,NetObject),(Task,Task),(Location,Location)] (lhs is Array, rhs is Number)
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	Binary operator "deleteat" arguments must be [(Array,Number)] (lhs is Array, rhs is Array)
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	can't interpret statement (missing ;?): <Array([undefined])> <Variable(findIf)> <Code({(_x select 0) == _convoyIdx})>
+SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	error	can't interpret statement (missing ;?): <Variable(KPLIB_convoy_trucks)> <Variable(findIf)> <Code({(_x select 0) == _convoyIdx})>
 SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	warning	Local variable "_height" assigned to an outer scope (not private)
 SCRIPTS/SERVER/RESOURCES/manage_logistics.sqf	warning	Local variable "_height" is not from this scope (not private)
 SCRIPTS/SERVER/SECONDARY/convoy_hijack.sqf	warning	Local variable "_waypoint" assigned to an outer scope (not private)
@@ -334,5 +358,6 @@ SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_squad2" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_squad3" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_squad4" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_stopit" not used
+SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_strongpointUnits" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_vehtospawn" not used
 onPlayerRespawn.sqf	warning	Variable "_newUnit" not used

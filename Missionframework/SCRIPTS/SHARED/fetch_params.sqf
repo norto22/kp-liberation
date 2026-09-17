@@ -46,7 +46,7 @@ if(isServer) then {
     GET_PARAM(KPLIB_civilian_activity, "Civilians", 1);
     GET_PARAM_BOOL(KPLIB_build_first_fob, "FirstFob", 0);
     GET_PARAM_BOOL(KPLIB_fob_vehicle, "FirstFobVehicle", 0);
-    GET_PARAM(KPLIB_maximum_fobs, "MaximumFobs", 26);
+    GET_PARAM(KPLIB_maximum_fobs, "MaximumFobs", 6);
     GET_PARAM(KPLIB_max_squad_size, "MaxSquadSize", 10);
     GET_PARAM_BOOL(KPLIB_blufor_defenders, "BluforDefenders", 1);
     GET_PARAM_BOOL(KPLIB_autodanger, "Autodanger", 0);

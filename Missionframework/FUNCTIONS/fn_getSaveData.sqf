@@ -171,7 +171,8 @@ private _stats = [
     stats_spartan_respawns,
     stats_supplies_produced,
     stats_supplies_spent,
-    stats_vehicles_recycled
+    stats_vehicles_recycled,
+    stats_taxi_insertions
 ];
 
 // Pack the weights in one array
@@ -204,5 +205,6 @@ private _weights = [
     resources_intel,
     _allMines,
     _allCrates,
-    KPLIB_sectorTowers
+    KPLIB_sectorTowers,
+    KPLIB_progression
 ] // return

@@ -106,6 +106,7 @@ if ( _alive_crew_count == 0 ) then {
 
 resources_intel = resources_intel + (10 * _alive_crew_count);
 stats_secondary_objectives = stats_secondary_objectives + 1;
+[_pilotsPos, KPLIB_prog_points_secondary_objective] call KPLIB_fnc_progAwardNearby;
 
 KPLIB_secondary_in_progress = -1; publicVariable "KPLIB_secondary_in_progress";
 sleep 1;

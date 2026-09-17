@@ -6,6 +6,21 @@ class CfgNotifications {
         colorIconText[] = { 1, 1, 1, 1 };
         priority = 5;
     };
+    class lib_taxi_status: lib_default_notification {
+        duration = 4;
+        title = $STR_TAXI_NOTIFICATION_TITLE;
+        description = "%1";
+        iconPicture = "RES\ui_redeploy.paa";
+        color[] = { 0, 0.35, 1, 1 };
+        sound = "taskUpdated";
+    };
+    class lib_taxi_error: lib_taxi_status {
+        duration = 8;
+        priority = 10;
+        title = $STR_TAXI_NOTIFICATION_ERROR_TITLE;
+        color[] = { 1, 0, 0, 1 };
+        sound = "taskFailed";
+    };
     class lib_sector_captured: lib_default_notification {
         title = $STR_NOTIFICATION_SECTORCAPTURED_TITLE;
         description = $STR_NOTIFICATION_SECTORCAPTURED_TEXT;

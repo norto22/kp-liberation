@@ -51,7 +51,8 @@ while { true } do {
         if ( manned ) then {
             _grp = createGroup KPLIB_side_friendly;
         };
-        _classname createUnit [_pos, _grp,"this addMPEventHandler [""MPKilled"", {_this spawn kill_manager}]", 0.5, "private"];
+        private _newRecruit = _classname createUnit [_pos, _grp,"this addMPEventHandler [""MPKilled"", {_this spawn kill_manager}]", 0.5, "private"];
+        [_newRecruit, getPlayerUID player] call KPLIB_fnc_progApplyRecruitQuality;
         build_confirmed = 0;
     } else {
         if ( buildtype == 8 ) then {
@@ -63,11 +64,13 @@ while { true } do {
                 _unitrank = "private";
                 if(_idx == 0) then { _unitrank = "sergeant"; };
                 if(_idx == 1) then { _unitrank = "corporal"; };
+                private _squadMember = objNull;
                 if (_classname isEqualTo blufor_squad_para) then {
-                    _x createUnit [_pos, _grp,"this addMPEventHandler [""MPKilled"", {_this spawn kill_manager}]; removeBackpackGlobal this; this addBackpackGlobal ""B_parachute""", 0.5, _unitrank];
+                    _squadMember = _x createUnit [_pos, _grp,"this addMPEventHandler [""MPKilled"", {_this spawn kill_manager}]; removeBackpackGlobal this; this addBackpackGlobal ""B_parachute""", 0.5, _unitrank];
                 } else {
-                    _x createUnit [_pos, _grp,"this addMPEventHandler [""MPKilled"", {_this spawn kill_manager}];", 0.5, _unitrank];
+                    _squadMember = _x createUnit [_pos, _grp,"this addMPEventHandler [""MPKilled"", {_this spawn kill_manager}];", 0.5, _unitrank];
                 };
+                [_squadMember, getPlayerUID player] call KPLIB_fnc_progApplyRecruitQuality;
                 _idx = _idx + 1;
 
             } foreach _classname;
@@ -301,6 +304,7 @@ while { true } do {
                 deleteVehicle _vehicle;
                 sleep 0.1;
                 _vehicle = _classname createVehicle _truepos;
+                _vehicle setVariable ["KPLIB_owner", getPlayerUID player, true];
                 _vehicle allowDamage false;
                 _vehicle setdir _vehdir;
                 if ((toLower (typeOf _vehicle)) in KPLIB_b_static_classes) then {
@@ -324,7 +328,7 @@ while { true } do {
                 };
 
                 if ( (unitIsUAV _vehicle) || manned ) then {
-                    [ _vehicle ] call KPLIB_fnc_forceBluforCrew;
+                    [ _vehicle, getPlayerUID player ] call KPLIB_fnc_forceBluforCrew;
                 };
 
                 sleep 0.3;

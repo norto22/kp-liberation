@@ -80,6 +80,61 @@ _player addAction [
     "
 ];
 
+// Call Taxi
+_player addAction [
+    ["<t color='#80FF80'>", localize "STR_TAXI_CALL_ACTION", "</t><img size='2' image='res\ui_redeploy.paa'/>"] joinString "",
+    "scripts\client\spawn\do_call_taxi.sqf",
+    nil,
+    -715,
+    false,
+    true,
+    "",
+    "
+        KPLIB_ace
+        && {isNull (objectParent _originalTarget)}
+        && {alive _originalTarget}
+        && {'ItemRadio' in ((items _originalTarget) + (assignedItems _originalTarget))}
+        && {!(KPLIB_all_fobs isEqualTo [])}
+        && {build_confirmed isEqualTo 0}
+    "
+];
+
+// Recall Taxi - return to FOB
+_player addAction [
+    ["<t color='#80FF80'>", localize "STR_TAXI_RECALL_FOB_BUTTON", "</t><img size='2' image='res\ui_redeploy.paa'/>"] joinString "",
+    "scripts\client\actions\do_recall_taxi.sqf",
+    "fob",
+    -716,
+    false,
+    true,
+    "",
+    "
+        KPLIB_ace
+        && {alive _originalTarget}
+        && {'ItemRadio' in ((items _originalTarget) + (assignedItems _originalTarget))}
+        && {KPLIB_taxi_slots_active > 0}
+        && {build_confirmed isEqualTo 0}
+    "
+];
+
+// Recall Taxi - extract at a new LZ
+_player addAction [
+    ["<t color='#80FF80'>", localize "STR_TAXI_RECALL_LZ_BUTTON", "</t><img size='2' image='res\ui_redeploy.paa'/>"] joinString "",
+    "scripts\client\actions\do_recall_taxi.sqf",
+    "lz",
+    -717,
+    false,
+    true,
+    "",
+    "
+        KPLIB_ace
+        && {alive _originalTarget}
+        && {'ItemRadio' in ((items _originalTarget) + (assignedItems _originalTarget))}
+        && {KPLIB_taxi_slots_active > 0}
+        && {build_confirmed isEqualTo 0}
+    "
+];
+
 // Squad management
 _player addAction [
     ["<t color='#80FF80'>", localize "STR_SQUAD_MANAGEMENT_ACTION", "</t><img size='2' image='\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\modeGroups_ca.paa'/>"] joinString "",

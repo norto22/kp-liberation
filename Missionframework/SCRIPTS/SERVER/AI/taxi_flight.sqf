@@ -1,0 +1,492 @@
+params [
+    ["_taxi", objNull, [objNull]],
+    ["_lzPos", [0, 0, 0], [[]], [2, 3]],
+    ["_fobPos", [0, 0, 0], [[]], [2, 3]],
+    ["_pickupPos", [0, 0, 0], [[]], [2, 3]],
+    ["_spawnPos", [0, 0, 0], [[]], [2, 3]]
+];
+if (!isServer || isNull _taxi) exitWith {};
+
+private _pilot = driver _taxi;
+private _grp = group _pilot;
+private _flightCrew = crew _taxi;
+private _damageAbort = false;
+private _landingPad = objNull;
+private _hoverHandle = -1;
+_taxi setVariable ["KPLIB_taxi_recall", []];
+_taxi setVariable ["KPLIB_taxi_lz", +_lzPos, true];
+_taxi setVariable ["KPLIB_taxi_hover_target_height", KPLIB_taxi_hover_height, true];
+
+// Enemy contacts must not replace the transport route with attack runs.
+_grp setBehaviour "CARELESS";
+_grp setCombatMode "BLUE";
+{
+    _x disableAI "AUTOCOMBAT";
+    _x disableAI "TARGET";
+    _x disableAI "AUTOTARGET";
+} forEach _flightCrew;
+
+private _fnc_passengers = {
+    // Include FFV and player-occupied crew seats; never delete a passenger.
+    (crew _taxi) select {!(_x in _flightCrew) || isPlayer _x}
+};
+private _fnc_flyable = {alive _taxi && alive _pilot && canMove _taxi};
+private _fnc_interrupted = {
+    params [["_returning", false]];
+    if (!_damageAbort && {damage _taxi > 0.5}) then {
+        _damageAbort = true;
+        _taxi setVariable ["KPLIB_taxi_aborted", true, true];
+        [_taxi, "STR_TAXI_MSG_DAMAGE_ABORT", [], true] call KPLIB_fnc_taxiNotify;
+    };
+    !([] call _fnc_flyable) || {!_returning && {
+        _damageAbort || {_taxi getVariable ["KPLIB_taxi_aborted", false]}
+        || {(_taxi getVariable ["KPLIB_taxi_hover_failure", ""]) != ""}
+        || {!((_taxi getVariable ["KPLIB_taxi_recall", []]) isEqualTo [])}
+    }}
+};
+private _fnc_stopHover = {
+    if (_hoverHandle >= 0) then {
+        [_hoverHandle] call CBA_fnc_removePerFrameHandler;
+        _hoverHandle = -1;
+    };
+    _taxi setVariable ["KPLIB_taxi_hover_active", false, true];
+    if (local _pilot) then {_pilot enableAI "MOVE";};
+};
+private _fnc_clearWaypoints = {
+    while {count waypoints _grp > 0} do {deleteWaypoint ((waypoints _grp) select 0);};
+};
+private _fnc_flyTo = {
+    params ["_targetPos", ["_height", 100], ["_returning", false], ["_arrivalRadius", 30], ["_insertion", false]];
+    if ([_returning] call _fnc_interrupted) exitWith {false};
+    [] call _fnc_stopHover;
+    deleteVehicle _landingPad;
+    _landingPad = objNull;
+    _pilot enableAI "MOVE";
+    _taxi land "NONE";
+    _taxi engineOn true;
+    _taxi flyInHeight 100;
+    [] call _fnc_clearWaypoints;
+    // Use one movement controller. A MOVE waypoint can complete early and
+    // override the direct order while this script still waits for its radius.
+    _grp setSpeedMode "NORMAL";
+    _pilot doMove _targetPos;
+    [format ["Taxi %1 flight started; target: %2, radius: %3 m, passengers: %4, vehicle local: %5, pilot local: %6", netId _taxi, _targetPos, _arrivalRadius, count ([] call _fnc_passengers), local _taxi, local _pilot], "TAXI"] call KPLIB_fnc_log;
+    private _deadline = time + KPLIB_taxi_hover_timeout + ((_taxi distance2D _targetPos) / 20);
+    private _nextProgress = time + 10;
+    waitUntil {
+        sleep 0.5;
+        // Brake before the insertion area instead of reaching it at cruise speed.
+        if (_insertion && {_taxi distance2D _targetPos < 1000}) then {_grp setSpeedMode "LIMITED";};
+        if (_taxi distance2D _targetPos < 300) then {_taxi flyInHeight [_height, _insertion];};
+        if (time >= _nextProgress) then {
+            [format ["Taxi %1 approaching; distance: %2 m, height: %3 m, speed: %4 m/s", netId _taxi, round (_taxi distance2D _targetPos), round ((getPosATL _taxi) select 2), vectorMagnitude velocity _taxi], "TAXI"] call KPLIB_fnc_log;
+            // Reissue a stalled direct order instead of hovering until timeout.
+            if (_taxi distance2D _targetPos >= _arrivalRadius && {vectorMagnitude velocity _taxi < 3}) then {
+                _pilot doMove _targetPos;
+            };
+            _nextProgress = time + 10;
+        };
+        ([_returning] call _fnc_interrupted) || _taxi distance2D _targetPos < _arrivalRadius || time > _deadline
+    };
+    // Clear the waypoint on EVERY exit, including damage and timeout.
+    [] call _fnc_clearWaypoints;
+    // The insertion leg must keep its destination while braking/descending.
+    // Stopping here can leave it hovering outside the later readiness bounds.
+    if (!_insertion) then {doStop _pilot;};
+    !([_returning] call _fnc_interrupted) && {_taxi distance2D _targetPos < _arrivalRadius}
+};
+private _fnc_land = {
+    params ["_pos", ["_returning", false]];
+    if ([_returning] call _fnc_interrupted) exitWith {false};
+    [] call _fnc_stopHover;
+    deleteVehicle _landingPad;
+    _landingPad = objNull;
+    // Re-evaluate every landing, including return-to-FOB: the original site may
+    // now contain a building, parked vehicle, or the other service helicopter.
+    private _safePos = [_pos, typeOf _taxi, 300, _taxi] call KPLIB_fnc_findTaxiLandingPos;
+    if (_safePos isEqualTo []) exitWith {
+        _taxi land "NONE";
+        _taxi flyInHeight 100;
+        [_taxi, "STR_TAXI_MSG_LANDING_ABORTED", [], true] call KPLIB_fnc_taxiNotify;
+        [format ["Taxi %1 refusing unsafe landing near %2", netId _taxi, _pos], "TAXI"] call KPLIB_fnc_log;
+        false
+    };
+    _pos = _safePos;
+    _landingPad = createVehicle ["Land_HelipadEmpty_F", _pos, [], 0, "CAN_COLLIDE"];
+    _landingPad setPosATL _pos;
+    _landingPad setVariable ["KPLIB_taxi_landing_pad", true];
+    _pilot enableAI "MOVE";
+    _taxi land "NONE";
+    _taxi engineOn true;
+    [] call _fnc_clearWaypoints;
+    _grp setSpeedMode "NORMAL";
+
+    // Give the landing autopilot the pad immediately. A MOVE waypoint can finish
+    // outside our 30 m arrival radius and leave the helicopter hovering forever
+    // before the old code ever issued land "LAND". Do not mix doMove/doStop or a
+    // forced hover-height order into this approach.
+    // GetIn/GetOut touch down with the engine running. Land is a full shutdown.
+    private _landingMode = if (_returning) then {"GetOut"} else {"GetIn"};
+    private _accepted = _taxi landAt [_landingPad, _landingMode, KPLIB_taxi_hover_timeout];
+    [format ["Taxi %1 landing at %2; accepted: %3", netId _taxi, _pos, _accepted], "TAXI"] call KPLIB_fnc_log;
+    private _landed = false;
+    private _blocked = false;
+    if (_accepted) then {
+        private _deadline = time + KPLIB_taxi_hover_timeout + ((_taxi distance2D _pos) / 20);
+        waitUntil {
+            sleep 1;
+            _landed = isTouchingGround _taxi && {abs speed _taxi < 2} && {_taxi distance2D _pos < 50};
+            if (!_landed) then {
+                _blocked = !([_pos, typeOf _taxi, _taxi, _landingPad] call KPLIB_fnc_isTaxiLandingClear);
+                // Also reject an unsafe actual descent footprint if the AI has
+                // drifted off the requested pad toward a roof or other obstacle.
+                if (!_blocked && {(getPosATL _taxi) select 2 < 20}) then {
+                    _blocked = !([getPosATL _taxi, typeOf _taxi, _taxi, _landingPad] call KPLIB_fnc_isTaxiLandingClear);
+                };
+            };
+            _landed || _blocked || ([_returning] call _fnc_interrupted) || time > _deadline
+        };
+    };
+    if (_blocked) then {
+        _taxi land "NONE";
+        _taxi flyInHeight 100;
+        [format ["Taxi %1 cancelled descent: landing footprint became obstructed", netId _taxi], "TAXI"] call KPLIB_fnc_log;
+        [_taxi, "STR_TAXI_MSG_LANDING_BLOCKED", [], true] call KPLIB_fnc_taxiNotify;
+    };
+    if (!_landed && {!_blocked} && {!([_returning] call _fnc_interrupted)}) then {
+        [_taxi, "STR_TAXI_MSG_LANDING_ABORTED", [], true] call KPLIB_fnc_taxiNotify;
+    };
+    if (_landed && {[] call _fnc_flyable}) then {
+        // Boarding/unloading controls departure, not the landing wait timer.
+        // Both _fnc_flyTo and the next _fnc_land restore MOVE before taking off.
+        _pilot disableAI "MOVE";
+        _taxi engineOn true;
+    };
+    [format ["Taxi %1 landing ended; touchdown: %2, distance: %3 m, height: %4 m", netId _taxi, _landed, round (_taxi distance2D _pos), round ((getPosATL _taxi) select 2)], "TAXI"] call KPLIB_fnc_log;
+    // Keep the pad while boarding/unloading; the next flight or cleanup owns it.
+    _landed && {!_blocked} && {!([_returning] call _fnc_interrupted)}
+};
+private _fnc_board = {
+    [_taxi, "STR_TAXI_MSG_BOARD_NOW"] call KPLIB_fnc_taxiNotify;
+    [format ["Taxi %1 boarding started", netId _taxi], "TAXI"] call KPLIB_fnc_log;
+    private _deadline = time + KPLIB_taxi_hover_timeout;
+    private _lastPassengers = [];
+    private _lastChange = time;
+    private _ready = false;
+    waitUntil {
+        sleep 1;
+        private _passengers = ([] call _fnc_passengers) select {alive _x};
+        if !(_passengers isEqualTo _lastPassengers) then {
+            _lastPassengers = _passengers;
+            _lastChange = time;
+            [format ["Taxi %1 boarding count: %2", netId _taxi, count _passengers], "TAXI"] call KPLIB_fnc_log;
+        };
+        _ready = !(_passengers isEqualTo []) && {time >= _lastChange + 15};
+        _ready || ([false] call _fnc_interrupted) || time > _deadline
+    };
+    [format ["Taxi %1 boarding ended; ready: %2, passengers: %3", netId _taxi, _ready, count ([] call _fnc_passengers)], "TAXI"] call KPLIB_fnc_log;
+    if (!_ready && {!([false] call _fnc_interrupted)}) then {
+        [_taxi, "STR_TAXI_MSG_BOARDING_TIMEOUT", [], true] call KPLIB_fnc_taxiNotify;
+    };
+    _ready && {!([false] call _fnc_interrupted)}
+};
+private _fnc_ropesClear = {
+    private _ropes = _taxi getVariable ["ace_fastroping_deployedRopes", []];
+    // ACE can leave the rider attached when the bottom rope segment breaks.
+    // A broken flag alone must never allow cutRopes or flight to resume.
+    private _states = [];
+    {
+        if (_x isEqualType [] && {count _x >= 7} && {(_x select 3) isEqualType objNull}) then {
+            private _riders = {_x isKindOf "CAManBase"} count attachedObjects (_x select 3);
+            _states pushBack [_x select 5, _x select 6, _riders];
+        } else {
+            _states pushBack []; // The decision helper fails closed on malformed state.
+        };
+    } forEach _ropes;
+    _states call KPLIB_fnc_taxiRopesClear
+};
+private _fnc_releaseRopes = {
+    if !((_taxi getVariable ["ace_fastroping_deployedRopes", []]) isEqualTo []) then {
+        // This also covers manual riders present before automatic deployment.
+        _taxi setVariable ["KPLIB_taxi_phase", "leaving_lz", true];
+        _pilot disableAI "MOVE";
+        waitUntil {sleep 0.2; ([] call _fnc_ropesClear) || !alive _taxi};
+        [_taxi] call ace_fastroping_fnc_cutRopes;
+        [_taxi] call ace_fastroping_fnc_stowFRIES;
+    };
+    [] call _fnc_stopHover;
+};
+private _fnc_insert = {
+    // Server-side ACE availability does not establish the passenger client's
+    // availability. Report it separately when diagnosing missing-addon warnings.
+    {
+        if (isPlayer _x) then {[_x, _taxi, true] remoteExecCall ["taxi_fast_rope_local", _x];};
+    } forEach ([] call _fnc_passengers);
+    private _config = configFile >> "CfgVehicles" >> typeOf _taxi;
+    private _ropeCapable = KPLIB_ace && {!isNil "ace_fastroping_fnc_deployRopes"}
+        && {getNumber (_config >> "ace_fastroping_enabled") > 0};
+    [format ["Taxi %1 insertion started; class: %2, ACE: %3, rope capable: %4, FRIES present: %5", netId _taxi, typeOf _taxi, KPLIB_ace, _ropeCapable, !isNull (_taxi getVariable ["ace_fastroping_FRIES", objNull])], "TAXI"] call KPLIB_fnc_log;
+
+    // Unsupported preset aircraft use a real landing instead of an empty hover.
+    if (!_ropeCapable) exitWith {
+        [_taxi, "STR_TAXI_MSG_LANDING_INSERTION"] call KPLIB_fnc_taxiNotify;
+        if !([_lzPos] call _fnc_land) exitWith {false};
+        private _deadline = time + KPLIB_taxi_hover_timeout;
+        waitUntil {sleep 1; ([] call _fnc_passengers) isEqualTo [] || ([false] call _fnc_interrupted) || time > _deadline};
+        ([] call _fnc_passengers) isEqualTo [] && {!([false] call _fnc_interrupted)}
+    };
+
+    _taxi setVariable ["KPLIB_taxi_phase", "approaching_lz", true];
+    [_taxi, "STR_TAXI_MSG_DEPARTING"] call KPLIB_fnc_taxiNotify;
+    if !([_lzPos, KPLIB_taxi_hover_height, false, 50, true] call _fnc_flyTo) exitWith {
+        [format ["Taxi %1 could not reach insertion approach; distance: %2 m", netId _taxi, round (_taxi distance2D _lzPos)], "TAXI"] call KPLIB_fnc_log;
+        if ([] call _fnc_flyable && {!_damageAbort} && {(_taxi getVariable ["KPLIB_taxi_recall", []]) isEqualTo []}) then {
+            [_taxi, "STR_TAXI_MSG_HOVER_FAILED", [], true] call KPLIB_fnc_taxiNotify;
+        };
+        false
+    };
+    if (getNumber (_config >> "ace_fastroping_enabled") == 2
+        && {isNull (_taxi getVariable ["ace_fastroping_FRIES", objNull])}) exitWith {
+        [format ["Taxi %1 cannot prepare ropes: FRIES equipment is missing", netId _taxi], "TAXI"] call KPLIB_fnc_log;
+        [_taxi, "STR_TAXI_MSG_ROPE_UNAVAILABLE", [], true] call KPLIB_fnc_taxiNotify;
+        false
+    };
+
+    // Prepare the hardware on arrival, before waiting for the final low hover.
+    // Respect a passenger's manual preparation/deployment instead of restarting it.
+    _taxi setVariable ["KPLIB_taxi_phase", "preparing_ropes", true];
+    [_taxi, "STR_TAXI_MSG_PREPARING_ROPES"] call KPLIB_fnc_taxiNotify;
+    if ((_taxi getVariable ["ace_fastroping_deploymentStage", 0]) == 0) then {
+        [_taxi] call ace_fastroping_fnc_prepareFRIES;
+    };
+    private _prepareDeadline = time + 15;
+    waitUntil {sleep 0.2;
+        (_taxi getVariable ["ace_fastroping_deploymentStage", 0]) >= 2
+        || ([false] call _fnc_interrupted) || time > _prepareDeadline
+    };
+    private _stage = _taxi getVariable ["ace_fastroping_deploymentStage", 0];
+    [format ["Taxi %1 FRIES preparation stage: %2", netId _taxi, _stage], "TAXI"] call KPLIB_fnc_log;
+    if (_stage < 2 || {[false] call _fnc_interrupted}) exitWith {
+        if (_stage < 2 && {!([false] call _fnc_interrupted)}) then {[_taxi, "STR_TAXI_MSG_ROPE_UNAVAILABLE", [], true] call KPLIB_fnc_taxiNotify;};
+        false
+    };
+
+    private _ropeOrigins = getArray (_config >> "ace_fastroping_ropeOrigins");
+    if (_ropeOrigins isEqualTo []) exitWith {
+        [format ["Taxi %1 has no configured rope attachment points", netId _taxi], "TAXI"] call KPLIB_fnc_log;
+        [_taxi, "STR_TAXI_MSG_ROPE_UNAVAILABLE", [], true] call KPLIB_fnc_taxiNotify;
+        false
+    };
+    _taxi setVariable ["KPLIB_taxi_phase", "stabilizing_hover", true];
+    [_taxi, "STR_TAXI_MSG_HOVER_SETTLING", [KPLIB_taxi_hover_height]] call KPLIB_fnc_taxiNotify;
+    _pilot enableAI "MOVE";
+    _grp setSpeedMode "LIMITED";
+    _taxi flyInHeight [KPLIB_taxi_hover_height, true];
+    _pilot doMove _lzPos;
+    private _deadline = time + (KPLIB_taxi_hover_timeout min 90);
+    private _nextCorrection = time + 5;
+    private _hoverReady = false;
+    private _ropeState = [];
+    waitUntil {
+        sleep 0.5;
+        if (_hoverHandle < 0 && {_taxi distance2D _lzPos < 50}
+            && {vectorMagnitude velocity _taxi < 1} && {(vectorUp _taxi) select 2 > 0.95}
+            && {!([false] call _fnc_interrupted)}) then {
+            [] call _fnc_clearWaypoints;
+            doStop _pilot;
+            _hoverHandle = [_taxi, _pilot, KPLIB_taxi_hover_height] call KPLIB_fnc_startTaxiHover;
+            if (_hoverHandle < 0 && {(_taxi getVariable ["KPLIB_taxi_hover_failure", ""]) == ""}) then {
+                _taxi setVariable ["KPLIB_taxi_hover_failure", "controller_unavailable", true];
+            };
+        };
+        _ropeState = [_taxi, _lzPos] call KPLIB_fnc_getTaxiRopeState;
+        if (time >= _nextCorrection) then {
+            if (_hoverHandle < 0) then {
+                _taxi flyInHeight [KPLIB_taxi_hover_height, true];
+                if (_taxi distance2D _lzPos >= 50) then {_pilot doMove _lzPos;};
+            };
+            [format ["Taxi %1 hover readiness [ready,reason,hookLength,ropeLength,speed,height,distance]: %2", netId _taxi, _ropeState], "TAXI"] call KPLIB_fnc_log;
+            _nextCorrection = time + 5;
+        };
+        _hoverReady = (_ropeState select 0) && {_taxi getVariable ["KPLIB_taxi_hover_active", false]};
+        _hoverReady || ([false] call _fnc_interrupted) || time > _deadline
+    };
+    if (!_hoverReady || {[false] call _fnc_interrupted}) exitWith {
+        [] call _fnc_releaseRopes;
+        private _failure = _taxi getVariable ["KPLIB_taxi_hover_failure", ""];
+        if ([] call _fnc_flyable && {!_damageAbort} && {(_taxi getVariable ["KPLIB_taxi_recall", []]) isEqualTo []}) then {
+            private _message = if (_failure in ["descent_blocked", "hover_obstructed"]) then {"STR_TAXI_MSG_HOVER_BLOCKED"} else {"STR_TAXI_MSG_HOVER_FAILED"};
+            [_taxi, _message, [], true] call KPLIB_fnc_taxiNotify;
+        };
+        [format ["Taxi %1 hover not ready: %2; controller: %3; obstruction: %4", netId _taxi, _ropeState, _failure, _taxi getVariable ["KPLIB_taxi_hover_blocker", []]], "TAXI"] call KPLIB_fnc_log;
+        false
+    };
+
+    // Do not also call deployAI: it deploys duplicate ropes, changes passenger
+    // groups, and independently cuts the ropes and resumes the pilot.
+    _pilot disableAI "MOVE";
+    _taxi setVariable ["KPLIB_taxi_phase", "inserting", true];
+    [_taxi, "STR_TAXI_MSG_ROPES_DEPLOYING"] call KPLIB_fnc_taxiNotify;
+    if ((_taxi getVariable ["ace_fastroping_deployedRopes", []]) isEqualTo []) then {
+        if ((_taxi getVariable ["ace_fastroping_deploymentStage", 0]) == 2 && {!([false] call _fnc_interrupted)}) then {
+            [_taxi, _pilot, "ACE_rope36"] call ace_fastroping_fnc_deployRopes;
+            sleep 2;
+        };
+    };
+    [format ["Taxi %1 ropes deployed: %2", netId _taxi, count (_taxi getVariable ["ace_fastroping_deployedRopes", []])], "TAXI"] call KPLIB_fnc_log;
+
+    private _queue = ([] call _fnc_passengers) select {alive _x};
+    private _success = !(_queue isEqualTo []) && {!((_taxi getVariable ["ace_fastroping_deployedRopes", []]) isEqualTo [])};
+    if ((_taxi getVariable ["ace_fastroping_deployedRopes", []]) isEqualTo [] && {!([false] call _fnc_interrupted)}) then {
+        [_taxi, "STR_TAXI_MSG_ROPE_UNAVAILABLE", [], true] call KPLIB_fnc_taxiNotify;
+    };
+    _deadline = time + KPLIB_taxi_hover_timeout;
+    {
+        if (!_success || {[false] call _fnc_interrupted} || {time > _deadline}) exitWith {_success = false;};
+        private _passenger = _x;
+        if (alive _passenger && {vehicle _passenger == _taxi}) then {
+            // Dispatch on the unit's owner, including player clients and HCs.
+            waitUntil {sleep 0.2; ([] call _fnc_ropesClear) || ([false] call _fnc_interrupted) || time > _deadline};
+            private _dispatchState = [_taxi, _lzPos] call KPLIB_fnc_getTaxiRopeState;
+            if (!([false] call _fnc_interrupted) && {time <= _deadline} && {_dispatchState select 0}) then {
+                private _requestId = format ["%1/%2/%3", netId _taxi, netId _passenger, diag_tickTime];
+                // Scheduled RPC lets the passenger owner wait for replicated ACE
+                // state instead of silently dropping a request that arrived first.
+                [_passenger, _taxi, false, _requestId] remoteExec ["taxi_fast_rope_local", _passenger];
+                private _startDeadline = time + 10;
+                private _started = false;
+                private _reply = [];
+                private _refused = false;
+                waitUntil {sleep 0.2;
+                    // Latch damage while waiting, but do not cut out from under
+                    // an already dispatched owner RPC merely because recall arrives.
+                    [false] call _fnc_interrupted;
+                    _reply = _passenger getVariable ["KPLIB_taxi_rope_result", []];
+                    _refused = count _reply >= 3 && {_reply select 0 == _requestId} && {_reply select 1 == "refused"};
+                    _started = vehicle _passenger != _taxi && {
+                        !(isNull attachedTo _passenger) || {(getPosATL _passenger) select 2 < 2}
+                    };
+                    _started || _refused || !alive _passenger || !alive _taxi || time > _startDeadline
+                };
+                if (!_started) then {
+                    _success = false;
+                    [format ["Taxi %1 passenger %2 did not start fast-roping; owner response: %3", netId _taxi, name _passenger, _reply], "TAXI"] call KPLIB_fnc_log;
+                    if ((_taxi getVariable ["KPLIB_taxi_recall", []]) isEqualTo [] && {!_damageAbort}) then {
+                        [_taxi, "STR_TAXI_MSG_PASSENGER_FAILED", [], true] call KPLIB_fnc_taxiNotify;
+                    };
+                    if (_refused && {_reply select 2 == "missing_ace_fastroping"}) then {
+                        [owner _passenger, "STR_TAXI_MSG_CLIENT_ACE_MISSING", [], true] call KPLIB_fnc_taxiNotify;
+                    };
+                };
+                waitUntil {sleep 0.2;
+                    (([] call _fnc_ropesClear) && {isNull attachedTo _passenger})
+                    || !alive _taxi || !alive _passenger || time > _deadline
+                };
+            } else {
+                _success = false;
+                [format ["Taxi %1 stopped passenger dispatch; readiness: %2", netId _taxi, _dispatchState], "TAXI"] call KPLIB_fnc_log;
+                if ((_taxi getVariable ["KPLIB_taxi_recall", []]) isEqualTo [] && {!_damageAbort}) then {
+                    [_taxi, "STR_TAXI_MSG_PASSENGER_FAILED", [], true] call KPLIB_fnc_taxiNotify;
+                };
+            };
+        };
+    } forEach _queue;
+
+    _success = _success && {([] call _fnc_passengers) isEqualTo []} && {!([false] call _fnc_interrupted)};
+    if (_success) then {sleep KPLIB_taxi_rope_clear_grace;};
+    [] call _fnc_releaseRopes;
+    _success && {!([false] call _fnc_interrupted)}
+};
+
+_taxi setVariable ["KPLIB_taxi_phase", "pickup", true];
+[_taxi, "STR_TAXI_MSG_PICKUP_INBOUND", [mapGridPosition _pickupPos]] call KPLIB_fnc_taxiNotify;
+private _inserted = false;
+if ([_pickupPos] call _fnc_land) then {
+    if ([] call _fnc_board) then {_inserted = [] call _fnc_insert;};
+};
+// Early approach/preparation exits must honor any manually occupied ropes too.
+[] call _fnc_releaseRopes;
+
+if (_inserted) then {
+    [_taxi, "STR_TAXI_MSG_INSERTION_COMPLETE"] call KPLIB_fnc_taxiNotify;
+    stats_taxi_insertions = stats_taxi_insertions + 1;
+    if ((random 100) < KPLIB_taxi_alertness_chance && {[] call KPLIB_fnc_getOpforCap < KPLIB_battlegroup_cap}) then {
+        private _enemyPos = _lzPos getPos [300 + random 300, random 360];
+        private _infGrp = createGroup [KPLIB_side_enemy, true];
+        {[_x, _enemyPos, _infGrp, "PRIVATE", 0.5] call KPLIB_fnc_createManagedUnit;} forEach ([] call KPLIB_fnc_getSquadComp);
+        [_infGrp] spawn battlegroup_ai;
+    };
+    // Leave the insertion site and keep this airframe available for extraction.
+    _taxi setVariable ["KPLIB_taxi_phase", "standby", true];
+    private _standbyPos = _fobPos getPos [500, _fobPos getDir _spawnPos];
+    [_standbyPos] call _fnc_flyTo;
+    private _standbyDeadline = time + KPLIB_taxi_hover_timeout;
+    waitUntil {sleep 1; ([false] call _fnc_interrupted) || time > _standbyDeadline};
+};
+
+// A recall can redirect a healthy flight; damage always latches return-to-FOB.
+private _recall = _taxi getVariable ["KPLIB_taxi_recall", []];
+if ([] call _fnc_flyable && {!_damageAbort} && {damage _taxi <= 0.5} && {!(_recall isEqualTo [])} && {_recall select 1}) then {
+    _taxi setVariable ["KPLIB_taxi_recall", []];
+    _taxi setVariable ["KPLIB_taxi_phase", "extraction", true];
+    if ([_recall select 0] call _fnc_land) then {[] call _fnc_board;};
+};
+
+_taxi setVariable ["KPLIB_taxi_phase", "returning", true];
+_taxi setVariable ["KPLIB_taxi_recall", []];
+[] call _fnc_stopHover;
+if ([] call _fnc_flyable) then {[_taxi, "STR_TAXI_MSG_RETURNING"] call KPLIB_fnc_taxiNotify;};
+// Return to the departure FOB, never the stale insertion/extraction target.
+private _home = [_pickupPos, true] call _fnc_land;
+// If the original landing cannot be completed, the squad can choose another
+// extraction LZ rather than being left aboard a silently stranded aircraft.
+while {!_home && {[] call _fnc_flyable} && {!(([] call _fnc_passengers) isEqualTo [])}} do {
+    _taxi setVariable ["KPLIB_taxi_phase", "holding_for_lz", true];
+    [_taxi, "STR_TAXI_MSG_LANDING_FAILED", [], true] call KPLIB_fnc_taxiNotify;
+    waitUntil {sleep 1; !([] call _fnc_flyable) || !((_taxi getVariable ["KPLIB_taxi_recall", []]) isEqualTo []) || ([] call _fnc_passengers) isEqualTo []};
+    private _recovery = _taxi getVariable ["KPLIB_taxi_recall", []];
+    if ([] call _fnc_flyable && {!(_recovery isEqualTo [])}) then {
+        _taxi setVariable ["KPLIB_taxi_recall", []];
+        _taxi setVariable ["KPLIB_taxi_phase", "returning", true];
+        private _recoveryPos = if (_recovery select 1) then {_recovery select 0} else {_pickupPos};
+        _home = [_recoveryPos, true] call _fnc_land;
+    };
+};
+if (_home && {!(([] call _fnc_passengers) isEqualTo [])}) then {
+    [_taxi, "STR_TAXI_MSG_DISEMBARK"] call KPLIB_fnc_taxiNotify;
+};
+if (!_home && {!_inserted} && {([] call _fnc_passengers) isEqualTo []} && {[] call _fnc_flyable}) then {
+    [_taxi, "STR_TAXI_MSG_NO_LANDING_SITE", [], true] call KPLIB_fnc_taxiNotify;
+};
+// A healthy occupied taxi still consumes its pool slot, even if unloading takes
+// longer than the landing/boarding timeout. Do not abandon the service aircraft
+// and grant another slot just because a passenger remains seated.
+waitUntil {sleep 1;
+    ([] call _fnc_passengers) isEqualTo [] || !([] call _fnc_flyable)
+};
+
+// Only retire an empty aircraft after it flies away. If passengers stay aboard,
+// or the aircraft cannot get home, leave the aircraft and occupants intact.
+if (_home && {([] call _fnc_passengers) isEqualTo []} && {[] call _fnc_flyable}) then {
+    _taxi setVariable ["KPLIB_taxi_phase", "departing", true];
+    [_spawnPos, 150, true] call _fnc_flyTo;
+};
+private _lost = !([] call _fnc_flyable);
+[] call _fnc_stopHover;
+deleteVehicle _landingPad;
+KPLIB_taxi_slots_active = (KPLIB_taxi_slots_active - 1) max 0;
+publicVariable "KPLIB_taxi_slots_active";
+_taxi setVariable ["KPLIB_taxi_active", false, true];
+_taxi setVariable ["KPLIB_taxi_phase", "complete", true];
+if (_lost) then {
+    [_taxi, "STR_TAXI_MSG_AIRCRAFT_LOST", [], true] call KPLIB_fnc_taxiNotify;
+    KPLIB_taxi_cooldown_until pushBack (time + KPLIB_taxi_respawn_cooldown);
+    publicVariable "KPLIB_taxi_cooldown_until";
+} else {
+    [_taxi, "STR_TAXI_MSG_SERVICE_COMPLETE"] call KPLIB_fnc_taxiNotify;
+};
+if (alive _taxi && {([] call _fnc_passengers) isEqualTo []}
+    && {({(_x distance2D _taxi) < 1500} count allPlayers) == 0}) then {
+    {if (!isPlayer _x && {vehicle _x == _taxi}) then {deleteVehicle _x;};} forEach _flightCrew;
+    deleteVehicle _taxi;
+};

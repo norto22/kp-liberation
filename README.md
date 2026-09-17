@@ -44,6 +44,54 @@ The area has fallen to the enemy, and it is up to you to take it back. Embark on
 * Accomplish meaningful secondary objectives that will benefit your progression.
 * Never lose your progress with the built-in server-side save system.
 
+## Testing the AI helicopter taxi (v0.97.0 development)
+
+Build this checkout with `build.bat` on Windows, or run `npm install` and `npx gulp` in `_tools`. Load the rebuilt mission with ACE3 and its dependencies. In-game verification of issue #3 is still in progress.
+
+With at least one FOB established, carry a vanilla `ItemRadio` either equipped or in inventory. While on foot and outside build mode, choose **Call Taxi** in the action menu. Select the departure FOB, choose Light or Armed, then click a destination **300–9,000 m from that FOB** to enable **Call**. The selected FOB needs fuel crates in its storage area; a call costs 2 fuel per kilometre, rounded up, with a minimum of 5.
+
+The taxi starts airborne about 2.5 km away and flies to clear ground within 300 m of the departure FOB. The search checks aircraft-sized empty positions across that area. Landing-gear terrain must be dry and reasonably level; geometry checks cover the configured main-rotor radius plus a 2 m buffer, rejecting roofs, overhangs, walls and obstructing vehicles without excluding an entire field because of nearby objects' bounding spheres. Aircraft without rotor metadata use a bounding-size fallback. The site is rechecked during descent; another taxi's reserved footprint is excluded. Keep the immediate touchdown area clear until it lands. If no suitable pickup site exists, the request is rejected before fuel is charged. Flight routing still relies on Arma's AI; this is landing-site validation, not a guarantee against every AI collision.
+
+The taxi receives a direct helipad pickup/unload order (Arma 3 2.20 or newer), keeps the engine running, and holds on the ground while passengers board or unload. Boarding starts only after ground contact at low speed. Board there using the normal get-in action. It waits for the first passenger, then for 15 seconds without a boarding change before departing for the selected insertion LZ. Landing allows five minutes plus travel time; boarding allows five minutes after touchdown.
+
+For the rope test, choose **Armed / Ghost Hawk**. It receives FRIES and four stock 36 m ACE ropes at spawn. On reaching the LZ approach area, the system prepares FRIES and slows down. After checking the descent volume, a bounded hover assist brings it to a measured **32 m above terrain** and holds it there until riders clear. Deployment requires the aircraft to be within 0.75 m of that target, with sufficient rope reach and low speed. Physics and collision remain enabled; an obstructed correction is aborted. Passengers descend automatically, one at a time, and keep their original groups. The default Light / Hummingbird lacks ACE rope support and uses a landing instead. ACE's [fast-roping framework](https://ace3.acemod.org/wiki/framework/fastroping-framework) describes aircraft compatibility. Server RPT entries tagged `[TAXI]` retain detailed diagnostic state.
+
+Taxi requests and flight updates appear in localized notifications and remain in chat. Rejections explain fuel, availability, range or landing-site problems; flight updates announce boarding, preparation, descent and return. If an occupied taxi cannot land, select another point with **Extract at LZ**. Updates go to the requester, the taxi's passengers and the requesting squad, rather than the whole server.
+
+After insertion, the same helicopter waits near the FOB for up to five minutes. **Extract at LZ** recalls your squad's nearest active taxi to a new field landing site; after boarding it returns to the departure FOB. **Return to FOB**, a timeout, or damage above 50% ends the insertion. The pilot must return and land rather than attack enemies or retry the insertion. Get out normally at the FOB. Cleanup only deletes an empty taxi away from players; if it cannot return or passengers remain aboard, it stays in the world.
+
+Regression checks (require Arma; static checks do not verify AI flight):
+
+- With ACE and a FOB available, verify Call Taxi appears with a radio equipped, remains available with it in inventory, and disappears after removing it entirely. Check both recall actions with an active taxi too.
+- Choose an LZ about 1 km from the selected FOB: Call enables and the request uses that FOB, including when it is not the first entry in the list.
+- Watch the taxi approach and land; it must not spawn beside the FOB, stop in a hover before receiving its landing order, or depart for insertion empty. Verify both the initial FOB pickup and Extract at LZ. Server RPT entries tagged `[TAXI]` record whether the landing order was accepted and whether touchdown occurred, with distance and height if it failed.
+- Board two passengers several seconds apart, including an FFV seat where available: departure must wait 15 seconds after the last boarding change. The engine must remain running throughout pickup and return-to-FOB unloading, without the helicopter lifting off while waiting.
+- Leave the taxi empty: it should depart after the boarding timeout and release its pool slot. Interrupt a pickup or destroy the taxi and verify passengers are not deleted and a destroyed airframe's slot enters cooldown.
+- In the Ghost Hawk, check FRIES and rope cargo before takeoff. Test insertion with two player clients and an AI passenger: ropes deploy once, everyone reaches the ground, and departure waits for all ropes to clear plus the grace period.
+- For a longer insertion flight, verify the pilot slows before the LZ and continues correcting position and altitude after FRIES reaches stage 2. From both 34 m and 47 m, the hover assist must converge to 32 m before deployment. The hold must stop before normal AI flight resumes, and a recall/timeout must not release it under a rider.
+- At the measured 32 m hold, verify the supplied ropes reach the terrain below both attachment points with 0.5 m slack. The deployment speed limit remains 3 m/s; the hold commands are capped at 2 m/s total speed and 2 m/s² acceleration. A manually deployed shorter rope must not allow a passenger to be sent down beyond its reach.
+- Each passenger's owner waits briefly for replicated rope state, rechecks the same readiness rule, and acknowledges deployment or a refusal reason. A broken rope with a rider still attached must not be cut; AI passengers must be unassigned from the taxi after insertion.
+
+The readiness, rope-cleanup decisions and hover-control math have executable SQF-VM regressions, including 47→32 m and 34→32 m kinematic replays. See [the test instructions](tools/README.md#taxi-sqf-regression-tests). These exercise production SQF, but do not simulate Arma's helicopter AI, ACE rope physics, or network replication. Those still require the in-game checks above.
+- ACE fast-roping must be available on the passenger clients as well as the server. At insertion start, each player client reports addon/function availability to the server's `[TAXI]` log; investigate any `false` values or missing-content warnings before treating them as a flight-control problem.
+- Damage the Ghost Hawk above 50% while hovering with passengers still aboard. It must abort to the FOB without strafing, retrying insertion, despawning, or ejecting passengers. Leave a passenger aboard for more than five minutes after landing: the aircraft must remain and still occupy its pool slot until they disembark.
+- Test Extract at LZ, Return to FOB, and two active taxis from different squads. A recall must affect only the requesting squad's taxi, and extraction must finish with landing and unloading at the departure FOB.
+- After a damage abort starts, repair the helicopter and request extraction: it must still finish returning to the FOB. With a healthy taxi on standby, let the original caller respawn and verify another member of the requesting squad can still recall it.
+- Request pickup beside a large warehouse and extraction on a building/bridge: the selected landing site must be clear terrain nearby, never the roof. Repeat near trees, a parked truck, steep ground, and water. With no suitable site within 300 m, pickup must be rejected without charging fuel. Move a vehicle into the selected site during descent and verify the landing order is cancelled. Two simultaneous taxis must not reserve overlapping landing footprints.
+- Request pickup in an open field and beside a road with power poles or small dropped items nearby: usable ground outside the actual collision geometry must remain eligible. Repeat on gently sloping ground. On rejection, the RPT reports how many search seeds and aircraft-sized empty candidates were checked.
+
+## Testing player progression in the KP Player Menu
+
+The built-in rank and score use your Steam UID's saved campaign progression. Recruit covers 0–49 points; Private starts at 50. The displayed playtime is the **whole campaign's saved running time**, not your personal connection time. Rank, score, and time refresh once per second while the menu is open. If the optional **KP Ranks** addon is loaded, the menu continues to show that addon's rank, score, and personal playtime instead.
+
+Rebuild the mission with `npx gulp` in `_tools` and restart it with the existing campaign save. Verify these cases in Arma; static checks cannot exercise multiplayer synchronization or the dialog:
+
+- Without KP Ranks, open the menu on a remote client immediately after loading a save with a known score of at least 50. The saved rank and score should appear before earning any new points, and playtime should advance while the menu stays open.
+- Join an already-running server and repeat the check. A new player should start at Recruit / 0 without script errors or changes to another player's score.
+- Leave the menu open on one client while a nearby teammate captures a sector within 150 m. Its score should update without reopening the menu; crossing 50 points should change Recruit to Private.
+- Close and immediately reopen the menu several times, then respawn and reopen it. Rank and time should continue updating without script errors. Repeat on a hosted server as well as a dedicated server.
+- Save and restart the campaign. Confirm the score and campaign clock resume from the save. With KP Ranks installed, confirm the menu still uses the addon's values and refreshes them while open.
+
 ## Needed Mods
 These mods are needed if you want to use the prepackaged missionfiles from the release tab or Steam Workshop.
 You can play every map without any mods (only the maps themself) if you set the preset to custom in the file `kp_liberation_config`.

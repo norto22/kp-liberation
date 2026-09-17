@@ -2,22 +2,25 @@
     File: fn_forceBluforCrew.sqf
     Author: KP Liberation Dev Team - https://github.com/KillahPotatoes
     Date: 2019-11-25
-    Last Update: 2019-12-04
+    Last Update: 2026-09-16
     License: MIT License - http://www.opensource.org/licenses/MIT
 
     Description:
         Creates vehicle crew from vehicle config.
         If the crew isn't the same side as the players, it'll create a player side crew.
+        If a UID is given, applies that player's recruit-quality progression tier to the crew.
 
     Parameter(s):
-        _veh - Vehicle to add the blufor crew to [OBJECT, defaults to objNull]
+        _veh - Vehicle to add the blufor crew to                    [OBJECT, defaults to objNull]
+        _uid - UID of the buying player, for recruit quality scaling [STRING, defaults to ""]
 
     Returns:
         Function reached the end [BOOL]
 */
 
 params [
-    ["_veh", objNull, [objNull]]
+    ["_veh", objNull, [objNull]],
+    ["_uid", "", [""]]
 ];
 
 if (isNull _veh) exitWith {["Null object given"] call BIS_fnc_error; false};
@@ -41,6 +44,11 @@ if ((side _grp) != KPLIB_side_friendly) then {
     {
         if (isNull objectParent _x) then {deleteVehicle _x};
     } forEach (units _grp);
+};
+
+// Apply the buying player's recruit-quality tier to whichever units ended up crewing the vehicle
+if (_uid != "") then {
+    {[_x, _uid] call KPLIB_fnc_progApplyRecruitQuality;} forEach (units _grp);
 };
 
 // Set the crew to safe behaviour

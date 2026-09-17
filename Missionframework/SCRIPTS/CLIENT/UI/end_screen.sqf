@@ -38,6 +38,7 @@ params [
     "_stats_supplies_produced",
     "_stats_supplies_spent",
     "_stats_vehicles_recycled",
+    "_stats_taxi_insertions",
     "_stats_rabbits_killed"
 ];
 
@@ -146,9 +147,18 @@ if (dialog) then {sleep 3};
 [] call _cleanPage;
 
 // Eighth page
+[691, format [localize "STR_STATS_TAXI", _stats_taxi_insertions]] call _addReportLine;
 [693, localize "STR_STATS_END1"] call _addReportLine;
 [694, localize "STR_STATS_END2"] call _addReportLine;
 [696, localize "STR_STATS_END3"] call _addReportLine;
+[] call _cleanPage;
+
+// Ninth page - personal progression recap
+private _progEntry = [getPlayerUID player] call KPLIB_fnc_progGetPlayerData;
+private _progPoints = _progEntry select 1;
+private _progTierName = KPLIB_prog_tier_names select ([_progPoints] call KPLIB_fnc_progGetTier);
+[691, format [localize "STR_KPLIB_PROG_RECAP_RANK", _progTierName]] call _addReportLine;
+[692, format [localize "STR_KPLIB_PROG_RECAP_SCORE", _progPoints], true] call _addReportLine;
 
 waitUntil {!dialog};
 cinematic_camera_started = false;

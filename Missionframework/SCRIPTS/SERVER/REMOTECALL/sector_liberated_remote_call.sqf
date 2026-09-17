@@ -16,6 +16,7 @@ stats_readiness_earned = stats_readiness_earned + _combat_readiness_increase;
 [_liberated_sector, 0] remoteExecCall ["remote_call_sector"];
 blufor_sectors pushback _liberated_sector; publicVariable "blufor_sectors";
 stats_sectors_liberated = stats_sectors_liberated + 1;
+[markerPos _liberated_sector, KPLIB_prog_points_sector_captured] call KPLIB_fnc_progAwardNearby;
 
 reset_battlegroups_ai = true; publicVariable "reset_battlegroups_ai";
 

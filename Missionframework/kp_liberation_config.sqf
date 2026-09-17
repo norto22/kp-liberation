@@ -215,6 +215,16 @@ KPLIB_halo_altitude = 2500;                                             // Altit
 KPLIB_secondary_missions_costs = [15, 10, 8];                           // Intel price for the secondary missions [FOB hunting, Convoy ambush, SAR].
 KPLIB_secondary_objective_impact = 0.6;                                 // The percentage impact against enemy combat readiness for a successful FOB hunt.
 KPLIB_recycling_percentage = 0.5;                                       // Percentage of resources you get back from recycling.
+KPLIB_taxi_pool_size = 2;                                               // Concurrently trackable AI taxi airframes, independent of KPLIB_heli_slots.
+KPLIB_taxi_fuel_cost_per_km = 2;                                        // Fuel charged per km of LZ distance from the departure FOB.
+KPLIB_taxi_fuel_cost_min = 5;                                           // Minimum fuel charged per taxi call regardless of distance.
+KPLIB_taxi_lz_min_range = 300;                                          // Minimum metres the LZ must be from the departure FOB.
+KPLIB_taxi_lz_max_range = 9000;                                         // Maximum metres the LZ may be from the departure FOB.
+KPLIB_taxi_rope_clear_grace = 3;                                        // Seconds to hold position after ropes go clear before actually departing.
+KPLIB_taxi_hover_height = 32;                                          // Measured terrain-relative insertion hold height, in metres; stock ACE ropes remain unchanged.
+KPLIB_taxi_hover_timeout = 300;                                         // Safety-net seconds to hover before auto-departing even if ropes never clear.
+KPLIB_taxi_respawn_cooldown = 600;                                      // Seconds before a lost taxi airframe's pool slot becomes available again.
+KPLIB_taxi_alertness_chance = 60;                                       // 0-100 percent chance a completed taxi insertion spawns a hostile squad near the LZ.
 KPLIB_production_interval = 30;                                 // Time in minutes until a production process is finished, when resources multiplier is set to 1.
 
 KPLIB_sector_size = 1000;                                               // Range to activate a sector.
@@ -233,6 +243,15 @@ KPLIB_sector_cap = 180;                                                 // Cap f
 KPLIB_battlegroup_cap = 150;                                            // Cap for enemy battlegroups.
 KPLIB_patrol_cap = 150;                                                 // Cap for enemy patrols.
 
+KPLIB_strongpoint_building_thresholds = [15, 40, 80];                   // Building counts mapping to 1/2/3 strongpoints; below the first, zero.
+KPLIB_strongpoint_max_count = 3;                                        // Hard cap on strongpoints per sector.
+KPLIB_strongpoint_min_buildingpos = 8;                                  // Minimum building positions to qualify as a strongpoint candidate.
+KPLIB_strongpoint_spacing = 60;                                         // Minimum metres between selected strongpoints.
+KPLIB_strongpoint_defender_part = 0.4;                                  // Share of the sector's building-defender budget assigned to strongpoints.
+KPLIB_strongpoint_scatter_factor = 0.6;                                 // Multiplier on the remaining scattered building defenders.
+KPLIB_strongpoint_road_search_range = 40;                               // Metres, nearRoads query radius per candidate building.
+KPLIB_strongpoint_lane_cluster_angle = 45;                              // Degrees, angular threshold for collapsing road directions into one lane.
+
 KPLIB_cr_kill_penalty = 5;                                      // Civil Reputation penalty for killing a civilian.
 KPLIB_cr_building_penalty = 3;                                  // Civil Reputation penalty for destroying/damaging a building.
 KPLIB_cr_vehicle_penalty = 2;                                   // Civil Reputation penalty for stealing a civilian vehicle.
@@ -240,6 +259,27 @@ KPLIB_cr_resistance_penalty = 3;                                // Civil Reputat
 KPLIB_cr_sector_gain = 5;                                       // Civil Reputation gain for liberate a sector.
 KPLIB_cr_wounded_chance = 35;                                   // Chance (0-100) that there are wounded civilians right after capturing a sector.
 KPLIB_cr_wounded_gain = 2;                                      // Civil Reputation gain for providing medical assistance for wounded civilians.
+
+KPLIB_prog_tier_names = ["Recruit", "Private", "Corporal", "Sergeant", "Lieutenant", "Veteran"];  // Custom veterancy tier names, in ascending order.
+KPLIB_prog_tier_thresholds = [0, 50, 150, 350, 700, 1200];              // Minimum points to reach each tier in KPLIB_prog_tier_names.
+KPLIB_prog_points_opfor_soldier = 2;                                    // Points for a player-attributed OPFOR soldier kill.
+KPLIB_prog_points_opfor_vehicle = 5;                                    // Points for a player-attributed OPFOR vehicle kill.
+KPLIB_prog_points_secondary_objective = 10;                             // Points per nearby player on secondary objective completion.
+KPLIB_prog_points_sector_captured = 10;                                 // Points per nearby player on sector capture.
+KPLIB_prog_points_fob_built = 5;                                        // Points per nearby player when a FOB is built.
+KPLIB_prog_points_prisoner_captured = 3;                                // Points per nearby player on prisoner capture.
+KPLIB_prog_points_vehicle_recycled = 2;                                 // Points per nearby player on vehicle recycling.
+KPLIB_prog_points_logi_delivery = 8;                                    // Points for the player who completes a logi truck delivery.
+KPLIB_prog_points_medical = 5;                                          // Points per successful ACE medical treatment/revive.
+KPLIB_prog_points_playtime_interval = 600;                              // Seconds between playtime trickle awards.
+KPLIB_prog_points_playtime_amount = 1;                                  // Points awarded per interval to each connected player.
+KPLIB_prog_penalty_civilian_kill = 10;                                  // Points lost for killing a civilian.
+KPLIB_prog_penalty_teamkill = 15;                                       // Points lost for a teamkill.
+KPLIB_prog_penalty_vehicle_abandoned = 10;                              // Points lost when a flagged-abandoned vehicle is destroyed/lost.
+KPLIB_prog_award_radius = 150;                                          // Radius for "nearby players" credit on scripted completion events.
+KPLIB_prog_nearby_award_cap = 6;                                        // Max players credited per nearby-award event (prevents a full squad farming a tiny event unlimited times).
+KPLIB_prog_skill_baseline = 0.5;                                        // Baseline value (0-1) for aimingAccuracy/spotDistance/courage before any tier bonus.
+KPLIB_prog_abandon_seconds = 1500;                                      // Seconds a crewless, owned vehicle must stay in contested territory before being flagged as abandoned.
 
 KPLIB_civinfo_min = 5400;                                       // Civil Informant minimum spawn time. (seconds)
 KPLIB_civinfo_max = 10800;                                      // Civil Informant maximum spawn time. (seconds)
@@ -250,7 +290,12 @@ KPLIB_civinfo_task_chance = 40;                                 // Chance (0-100
 KPLIB_civinfo_task_duration = 900;                              // Duration until the task will despawn if no player is near. (seconds)
 
 KPLIB_convoy_ambush_chance = 2;                                 // Chance that a logistic convoy will be ambushed, when civil reputation is low.
-KPLIB_convoy_ambush_duration = 1200;                            // Duration of the convoy ambush event. (seconds)
+KPLIB_convoy_distress_duration = 1800;                          // Duration of the convoy distress-call response window. (seconds)
+KPLIB_convoy_distress_max_concurrent = 2;                       // Maximum number of convoy distress calls that may be active at once. Extra triggers are suppressed.
+KPLIB_convoy_distress_proximity_radius = 300;                   // Range at which a real hostile patrol/battlegroup triggers a convoy distress call. (meters)
+KPLIB_convoy_watchdog_interval = 45;                            // How often the per-truck watchdog samples position and hostile proximity. (seconds)
+KPLIB_convoy_watchdog_stuck_distance = 15;                      // Minimum distance a convoy truck must move per watchdog interval to not be considered stuck. (meters)
+KPLIB_convoy_watchdog_nudge_attempts = 2;                       // Failed nudge attempts before the watchdog repositions a stuck convoy truck.
 
 KPLIB_resistance_tier2 = 30;                                    // At which strength (0-100) the guerilla forces will be at tier 2?
 KPLIB_resistance_tier3 = 70;                                    // At which strength (0-100) the guerilla forces will be at tier 3?
