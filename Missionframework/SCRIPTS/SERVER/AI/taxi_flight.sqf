@@ -51,16 +51,24 @@ private _fnc_flyTo = {
     _taxi engineOn true;
     _taxi flyInHeight 100;
     [] call _fnc_clearWaypoints;
-    private _wp = _grp addWaypoint [_targetPos, 0];
-    _wp setWaypointType "MOVE";
-    _wp setWaypointSpeed "NORMAL";
-    _wp setWaypointCompletionRadius 20;
-    _grp setCurrentWaypoint _wp;
+    // Use one movement controller. A MOVE waypoint can complete early and
+    // override the direct order while this script still waits for its radius.
+    _grp setSpeedMode "NORMAL";
     _pilot doMove _targetPos;
+    [format ["Taxi %1 flight started; target: %2, radius: %3 m, passengers: %4, vehicle local: %5, pilot local: %6", netId _taxi, _targetPos, _arrivalRadius, count ([] call _fnc_passengers), local _taxi, local _pilot], "TAXI"] call KPLIB_fnc_log;
     private _deadline = time + KPLIB_taxi_hover_timeout + ((_taxi distance2D _targetPos) / 20);
+    private _nextProgress = time + 10;
     waitUntil {
         sleep 0.5;
         if (_taxi distance2D _targetPos < 300) then {_taxi flyInHeight [_height, _height == 20];};
+        if (time >= _nextProgress) then {
+            [format ["Taxi %1 approaching; distance: %2 m, height: %3 m, speed: %4 m/s", netId _taxi, round (_taxi distance2D _targetPos), round ((getPosATL _taxi) select 2), vectorMagnitude velocity _taxi], "TAXI"] call KPLIB_fnc_log;
+            // Reissue a stalled direct order instead of hovering until timeout.
+            if (_taxi distance2D _targetPos >= _arrivalRadius && {vectorMagnitude velocity _taxi < 3}) then {
+                _pilot doMove _targetPos;
+            };
+            _nextProgress = time + 10;
+        };
         ([_returning] call _fnc_interrupted) || _taxi distance2D _targetPos < _arrivalRadius || time > _deadline
     };
     // Clear the waypoint on EVERY exit, including damage and timeout.
@@ -72,7 +80,20 @@ private _fnc_land = {
     params ["_pos", ["_returning", false]];
     if ([_returning] call _fnc_interrupted) exitWith {false};
     deleteVehicle _landingPad;
+    _landingPad = objNull;
+    // Re-evaluate every landing, including return-to-FOB: the original site may
+    // now contain a building, parked vehicle, or the other service helicopter.
+    private _safePos = [_pos, typeOf _taxi, 300, _taxi] call KPLIB_fnc_findTaxiLandingPos;
+    if (_safePos isEqualTo []) exitWith {
+        _taxi land "NONE";
+        _taxi flyInHeight 100;
+        [format ["Taxi %1 refusing unsafe landing near %2", netId _taxi, _pos], "TAXI"] call KPLIB_fnc_log;
+        false
+    };
+    _pos = _safePos;
     _landingPad = createVehicle ["Land_HelipadEmpty_F", _pos, [], 0, "CAN_COLLIDE"];
+    _landingPad setPosATL _pos;
+    _landingPad setVariable ["KPLIB_taxi_landing_pad", true];
     _pilot enableAI "MOVE";
     _taxi land "NONE";
     _taxi engineOn true;
@@ -88,13 +109,27 @@ private _fnc_land = {
     private _accepted = _taxi landAt [_landingPad, _landingMode, KPLIB_taxi_hover_timeout];
     [format ["Taxi %1 landing at %2; accepted: %3", netId _taxi, _pos, _accepted], "TAXI"] call KPLIB_fnc_log;
     private _landed = false;
+    private _blocked = false;
     if (_accepted) then {
         private _deadline = time + KPLIB_taxi_hover_timeout + ((_taxi distance2D _pos) / 20);
         waitUntil {
             sleep 1;
             _landed = isTouchingGround _taxi && {abs speed _taxi < 2} && {_taxi distance2D _pos < 50};
-            _landed || ([_returning] call _fnc_interrupted) || time > _deadline
+            if (!_landed) then {
+                _blocked = !([_pos, typeOf _taxi, _taxi, _landingPad] call KPLIB_fnc_isTaxiLandingClear);
+                // Also reject an unsafe actual descent footprint if the AI has
+                // drifted off the requested pad toward a roof or other obstacle.
+                if (!_blocked && {(getPosATL _taxi) select 2 < 20}) then {
+                    _blocked = !([getPosATL _taxi, typeOf _taxi, _taxi, _landingPad] call KPLIB_fnc_isTaxiLandingClear);
+                };
+            };
+            _landed || _blocked || ([_returning] call _fnc_interrupted) || time > _deadline
         };
+    };
+    if (_blocked) then {
+        _taxi land "NONE";
+        _taxi flyInHeight 100;
+        [format ["Taxi %1 cancelled descent: landing footprint became obstructed", netId _taxi], "TAXI"] call KPLIB_fnc_log;
     };
     if (_landed && {[] call _fnc_flyable}) then {
         // Boarding/unloading controls departure, not the landing wait timer.
@@ -104,9 +139,10 @@ private _fnc_land = {
     };
     [format ["Taxi %1 landing ended; touchdown: %2, distance: %3 m, height: %4 m", netId _taxi, _landed, round (_taxi distance2D _pos), round ((getPosATL _taxi) select 2)], "TAXI"] call KPLIB_fnc_log;
     // Keep the pad while boarding/unloading; the next flight or cleanup owns it.
-    _landed && {!([_returning] call _fnc_interrupted)}
+    _landed && {!_blocked} && {!([_returning] call _fnc_interrupted)}
 };
 private _fnc_board = {
+    [format ["Taxi %1 boarding started", netId _taxi], "TAXI"] call KPLIB_fnc_log;
     private _deadline = time + KPLIB_taxi_hover_timeout;
     private _lastPassengers = [];
     private _lastChange = time;
@@ -117,10 +153,12 @@ private _fnc_board = {
         if !(_passengers isEqualTo _lastPassengers) then {
             _lastPassengers = _passengers;
             _lastChange = time;
+            [format ["Taxi %1 boarding count: %2", netId _taxi, count _passengers], "TAXI"] call KPLIB_fnc_log;
         };
         _ready = !(_passengers isEqualTo []) && {time >= _lastChange + 15};
         _ready || ([false] call _fnc_interrupted) || time > _deadline
     };
+    [format ["Taxi %1 boarding ended; ready: %2, passengers: %3", netId _taxi, _ready, count ([] call _fnc_passengers)], "TAXI"] call KPLIB_fnc_log;
     _ready && {!([false] call _fnc_interrupted)}
 };
 private _fnc_ropesClear = {
@@ -131,12 +169,11 @@ private _fnc_insert = {
     private _config = configFile >> "CfgVehicles" >> typeOf _taxi;
     private _ropeCapable = KPLIB_ace && {!isNil "ace_fastroping_fnc_deployRopes"}
         && {getNumber (_config >> "ace_fastroping_enabled") > 0};
+    [format ["Taxi %1 insertion started; class: %2, ACE: %3, rope capable: %4, FRIES present: %5", netId _taxi, typeOf _taxi, KPLIB_ace, _ropeCapable, !isNull (_taxi getVariable ["ace_fastroping_FRIES", objNull])], "TAXI"] call KPLIB_fnc_log;
 
     // Unsupported preset aircraft use a real landing instead of an empty hover.
     if (!_ropeCapable) exitWith {
-        private _landingPos = [_lzPos, 0, 100, 15, 0, 0.3, 0, [], [[0, 0], [0, 0]]] call BIS_fnc_findSafePos;
-        if (_landingPos isEqualTo [0, 0]) exitWith {false};
-        if !([_landingPos] call _fnc_land) exitWith {false};
+        if !([_lzPos] call _fnc_land) exitWith {false};
         private _deadline = time + KPLIB_taxi_hover_timeout;
         waitUntil {sleep 1; ([] call _fnc_passengers) isEqualTo [] || ([false] call _fnc_interrupted) || time > _deadline};
         ([] call _fnc_passengers) isEqualTo [] && {!([false] call _fnc_interrupted)}
@@ -262,10 +299,7 @@ private _recall = _taxi getVariable ["KPLIB_taxi_recall", []];
 if ([] call _fnc_flyable && {!_damageAbort} && {damage _taxi <= 0.5} && {!(_recall isEqualTo [])} && {_recall select 1}) then {
     _taxi setVariable ["KPLIB_taxi_recall", []];
     _taxi setVariable ["KPLIB_taxi_phase", "extraction", true];
-    private _extractPos = [_recall select 0, 0, 100, 15, 0, 0.3, 0, [], [[0, 0], [0, 0]]] call BIS_fnc_findSafePos;
-    if !(_extractPos isEqualTo [0, 0]) then {
-        if ([_extractPos] call _fnc_land) then {[] call _fnc_board;};
-    };
+    if ([_recall select 0] call _fnc_land) then {[] call _fnc_board;};
 };
 
 _taxi setVariable ["KPLIB_taxi_phase", "returning", true];

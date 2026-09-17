@@ -14,8 +14,12 @@ private _cooldownCount = {_x > time} count KPLIB_taxi_cooldown_until;
 if (KPLIB_taxi_slots_active >= (KPLIB_taxi_pool_size - _cooldownCount)) exitWith {false};
 
 // Pick a clear landing site near the FOB, before charging for the flight.
-private _pickupPos = [_fobPos, 25, 150, 15, 0, 0.3, 0, [], [[0, 0], [0, 0]]] call BIS_fnc_findSafePos;
-if (_pickupPos isEqualTo [0, 0]) exitWith {false};
+private _taxiClass = if (_classChoice == "armed") then {taxi_typename_armed} else {taxi_typename_light};
+private _pickupPos = [_fobPos, _taxiClass, 300] call KPLIB_fnc_findTaxiLandingPos;
+if (_pickupPos isEqualTo []) exitWith {
+    [format ["Taxi request rejected: no clear ground landing site near FOB %1", _fobPos], "TAXI"] call KPLIB_fnc_log;
+    false
+};
 
 // Arrive from the rear rather than materialising beside the waiting squad.
 // Try alternate bearings so another player cannot be standing at the spawn point.
@@ -61,8 +65,6 @@ private _remaining = _cost;
 } forEach _fuelCrates;
 
 please_recalculate = true;
-
-private _taxiClass = if (_classChoice == "armed") then {taxi_typename_armed} else {taxi_typename_light};
 
 private _taxi = createVehicle [_taxiClass, _spawnPos, [], 0, "FLY"];
 [_taxi] call KPLIB_fnc_forceBluforCrew;

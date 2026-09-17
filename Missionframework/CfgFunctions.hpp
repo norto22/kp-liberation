@@ -25,6 +25,7 @@ class KPLIB {
         class crGlobalMsg               {};
         class doSave                    {};
         class fillStorage               {};
+        class findTaxiLandingPos        {};
         class forceBluforCrew           {};
         class getAdaptiveVehicle        {};
         class getBluforRatio            {};
@@ -66,6 +67,7 @@ class KPLIB {
         class isBigtownActive           {};
         class isClassUAV                {};
         class isRadio                   {};
+        class isTaxiLandingClear        {};
         class log                       {};
         class potatoScan                {};
         class progAddPoints             {};
