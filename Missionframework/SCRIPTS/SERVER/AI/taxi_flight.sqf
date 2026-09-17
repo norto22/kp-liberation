@@ -60,6 +60,8 @@ private _fnc_flyTo = {
     private _nextProgress = time + 10;
     waitUntil {
         sleep 0.5;
+        // Brake before the insertion area instead of reaching it at cruise speed.
+        if (_height == 20 && {_taxi distance2D _targetPos < 1000}) then {_grp setSpeedMode "LIMITED";};
         if (_taxi distance2D _targetPos < 300) then {_taxi flyInHeight [_height, _height == 20];};
         if (time >= _nextProgress) then {
             [format ["Taxi %1 approaching; distance: %2 m, height: %3 m, speed: %4 m/s", netId _taxi, round (_taxi distance2D _targetPos), round ((getPosATL _taxi) select 2), vectorMagnitude velocity _taxi], "TAXI"] call KPLIB_fnc_log;
@@ -73,7 +75,9 @@ private _fnc_flyTo = {
     };
     // Clear the waypoint on EVERY exit, including damage and timeout.
     [] call _fnc_clearWaypoints;
-    doStop _pilot;
+    // The insertion leg must keep its destination while braking/descending.
+    // Stopping here can leave it hovering outside the later readiness bounds.
+    if (_height != 20) then {doStop _pilot;};
     !([_returning] call _fnc_interrupted) && {_taxi distance2D _targetPos < _arrivalRadius}
 };
 private _fnc_land = {
@@ -166,6 +170,11 @@ private _fnc_ropesClear = {
     ({(_x select 5) && {!(_x select 6)}} count _ropes) == 0
 };
 private _fnc_insert = {
+    // Server-side ACE availability does not establish the passenger client's
+    // availability. Report it separately when diagnosing missing-addon warnings.
+    {
+        if (isPlayer _x) then {[_x, _taxi, true] remoteExecCall ["taxi_fast_rope_local", _x];};
+    } forEach ([] call _fnc_passengers);
     private _config = configFile >> "CfgVehicles" >> typeOf _taxi;
     private _ropeCapable = KPLIB_ace && {!isNil "ace_fastroping_fnc_deployRopes"}
         && {getNumber (_config >> "ace_fastroping_enabled") > 0};
@@ -207,11 +216,22 @@ private _fnc_insert = {
     if (_stage < 2 || {[false] call _fnc_interrupted}) exitWith {false};
 
     _taxi setVariable ["KPLIB_taxi_phase", "stabilizing_hover", true];
+    _pilot enableAI "MOVE";
+    _grp setSpeedMode "LIMITED";
+    _taxi flyInHeight [20, true];
+    _pilot doMove _lzPos;
     private _deadline = time + KPLIB_taxi_hover_timeout;
+    private _nextCorrection = time + 5;
     private _hoverReady = false;
     waitUntil {
         sleep 0.5;
         private _height = (getPosATL _taxi) select 2;
+        if (time >= _nextCorrection) then {
+            _taxi flyInHeight [20, true];
+            if (_taxi distance2D _lzPos >= 50) then {_pilot doMove _lzPos;};
+            [format ["Taxi %1 stabilizing hover; height: %2 m, speed: %3 m/s, distance: %4 m", netId _taxi, round _height, vectorMagnitude velocity _taxi, round (_taxi distance2D _lzPos)], "TAXI"] call KPLIB_fnc_log;
+            _nextCorrection = time + 5;
+        };
         _hoverReady = _height > 5 && {_height < 26} && {vectorMagnitude velocity _taxi < 3}
             && {_taxi distance2D _lzPos < 50};
         _hoverReady || ([false] call _fnc_interrupted) || time > _deadline
@@ -227,7 +247,7 @@ private _fnc_insert = {
     _taxi setVariable ["KPLIB_taxi_phase", "inserting", true];
     if ((_taxi getVariable ["ace_fastroping_deployedRopes", []]) isEqualTo []) then {
         if ((_taxi getVariable ["ace_fastroping_deploymentStage", 0]) == 2 && {!([false] call _fnc_interrupted)}) then {
-            [_taxi, objNull, "ACE_rope36"] call ace_fastroping_fnc_deployRopes;
+            [_taxi, _pilot, "ACE_rope36"] call ace_fastroping_fnc_deployRopes;
             sleep 2;
         };
     };
