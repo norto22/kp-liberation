@@ -35,7 +35,9 @@ python tools/namespace_keys.py  # print the key inventory
 
 ### Updating the SQF lint baseline
 
-The taxi landing code uses the [Arma 3 2.18 `landAt` helipad overload](https://community.bistudio.com/wiki/landAt), which accepts `[helipad, "Land"]`. The installed analyzer only knows the older object/number overloads; its argument-type finding for this call is explicitly baselined.
+The taxi landing code uses the [`landAt` helipad overload](https://community.bistudio.com/wiki/landAt) with the Arma 3 2.20 pickup/unload modes and wait time: `[helipad, mode, waitTime]`. The installed analyzer only knows the older object/number overloads; its argument-type finding for this call is explicitly baselined.
+
+The same applies to [`flyInHeight [height, forced]`](https://community.bistudio.com/wiki/flyInHeight), used to request a forced 20 m fast-rope hover, matching ACE's fast-rope waypoint approach. The analyzer only knows the numeric overload.
 
 The baseline (`sqf_lint_baseline.txt`) records the *expected* sqflint findings
 on the current tree (legacy warnings + sqflint's false-positives on modern

@@ -42,7 +42,7 @@ private _fnc_clearWaypoints = {
     while {count waypoints _grp > 0} do {deleteWaypoint ((waypoints _grp) select 0);};
 };
 private _fnc_flyTo = {
-    params ["_targetPos", ["_height", 100], ["_returning", false]];
+    params ["_targetPos", ["_height", 100], ["_returning", false], ["_arrivalRadius", 30]];
     if ([_returning] call _fnc_interrupted) exitWith {false};
     deleteVehicle _landingPad;
     _landingPad = objNull;
@@ -60,13 +60,13 @@ private _fnc_flyTo = {
     private _deadline = time + KPLIB_taxi_hover_timeout + ((_taxi distance2D _targetPos) / 20);
     waitUntil {
         sleep 0.5;
-        if (_taxi distance2D _targetPos < 300) then {_taxi flyInHeight _height;};
-        ([_returning] call _fnc_interrupted) || _taxi distance2D _targetPos < 30 || time > _deadline
+        if (_taxi distance2D _targetPos < 300) then {_taxi flyInHeight [_height, _height == 20];};
+        ([_returning] call _fnc_interrupted) || _taxi distance2D _targetPos < _arrivalRadius || time > _deadline
     };
     // Clear the waypoint on EVERY exit, including damage and timeout.
     [] call _fnc_clearWaypoints;
     doStop _pilot;
-    !([_returning] call _fnc_interrupted) && {_taxi distance2D _targetPos < 30}
+    !([_returning] call _fnc_interrupted) && {_taxi distance2D _targetPos < _arrivalRadius}
 };
 private _fnc_land = {
     params ["_pos", ["_returning", false]];
@@ -83,7 +83,9 @@ private _fnc_land = {
     // outside our 30 m arrival radius and leave the helicopter hovering forever
     // before the old code ever issued land "LAND". Do not mix doMove/doStop or a
     // forced hover-height order into this approach.
-    private _accepted = _taxi landAt [_landingPad, "Land"];
+    // GetIn/GetOut touch down with the engine running. Land is a full shutdown.
+    private _landingMode = if (_returning) then {"GetOut"} else {"GetIn"};
+    private _accepted = _taxi landAt [_landingPad, _landingMode, KPLIB_taxi_hover_timeout];
     [format ["Taxi %1 landing at %2; accepted: %3", netId _taxi, _pos, _accepted], "TAXI"] call KPLIB_fnc_log;
     private _landed = false;
     if (_accepted) then {
@@ -93,6 +95,12 @@ private _fnc_land = {
             _landed = isTouchingGround _taxi && {abs speed _taxi < 2} && {_taxi distance2D _pos < 50};
             _landed || ([_returning] call _fnc_interrupted) || time > _deadline
         };
+    };
+    if (_landed && {[] call _fnc_flyable}) then {
+        // Boarding/unloading controls departure, not the landing wait timer.
+        // Both _fnc_flyTo and the next _fnc_land restore MOVE before taking off.
+        _pilot disableAI "MOVE";
+        _taxi engineOn true;
     };
     [format ["Taxi %1 landing ended; touchdown: %2, distance: %3 m, height: %4 m", netId _taxi, _landed, round (_taxi distance2D _pos), round ((getPosATL _taxi) select 2)], "TAXI"] call KPLIB_fnc_log;
     // Keep the pad while boarding/unloading; the next flight or cleanup owns it.
@@ -134,7 +142,34 @@ private _fnc_insert = {
         ([] call _fnc_passengers) isEqualTo [] && {!([false] call _fnc_interrupted)}
     };
 
-    if !([_lzPos, 20] call _fnc_flyTo) exitWith {false};
+    _taxi setVariable ["KPLIB_taxi_phase", "approaching_lz", true];
+    // Match ACE's fast-rope waypoint approach radius and forced hover altitude.
+    if !([_lzPos, 20, false, 50] call _fnc_flyTo) exitWith {
+        [format ["Taxi %1 could not reach insertion approach; distance: %2 m", netId _taxi, round (_taxi distance2D _lzPos)], "TAXI"] call KPLIB_fnc_log;
+        false
+    };
+    if (getNumber (_config >> "ace_fastroping_enabled") == 2
+        && {isNull (_taxi getVariable ["ace_fastroping_FRIES", objNull])}) exitWith {
+        [format ["Taxi %1 cannot prepare ropes: FRIES equipment is missing", netId _taxi], "TAXI"] call KPLIB_fnc_log;
+        false
+    };
+
+    // Prepare the hardware on arrival, before waiting for the final low hover.
+    // Respect a passenger's manual preparation/deployment instead of restarting it.
+    _taxi setVariable ["KPLIB_taxi_phase", "preparing_ropes", true];
+    if ((_taxi getVariable ["ace_fastroping_deploymentStage", 0]) == 0) then {
+        [_taxi] call ace_fastroping_fnc_prepareFRIES;
+    };
+    private _prepareDeadline = time + 15;
+    waitUntil {sleep 0.2;
+        (_taxi getVariable ["ace_fastroping_deploymentStage", 0]) >= 2
+        || ([false] call _fnc_interrupted) || time > _prepareDeadline
+    };
+    private _stage = _taxi getVariable ["ace_fastroping_deploymentStage", 0];
+    [format ["Taxi %1 FRIES preparation stage: %2", netId _taxi, _stage], "TAXI"] call KPLIB_fnc_log;
+    if (_stage < 2 || {[false] call _fnc_interrupted}) exitWith {false};
+
+    _taxi setVariable ["KPLIB_taxi_phase", "stabilizing_hover", true];
     private _deadline = time + KPLIB_taxi_hover_timeout;
     private _hoverReady = false;
     waitUntil {
@@ -144,26 +179,22 @@ private _fnc_insert = {
             && {_taxi distance2D _lzPos < 50};
         _hoverReady || ([false] call _fnc_interrupted) || time > _deadline
     };
-    if (!_hoverReady || {[false] call _fnc_interrupted}) exitWith {false};
-    if (getNumber (_config >> "ace_fastroping_enabled") == 2
-        && {isNull (_taxi getVariable ["ace_fastroping_FRIES", objNull])}) exitWith {false};
+    if (!_hoverReady || {[false] call _fnc_interrupted}) exitWith {
+        [format ["Taxi %1 hover not ready; height: %2 m, speed: %3 m/s, distance: %4 m", netId _taxi, round ((getPosATL _taxi) select 2), vectorMagnitude velocity _taxi, round (_taxi distance2D _lzPos)], "TAXI"] call KPLIB_fnc_log;
+        false
+    };
 
     // Do not also call deployAI: it deploys duplicate ropes, changes passenger
     // groups, and independently cuts the ropes and resumes the pilot.
     _pilot disableAI "MOVE";
     _taxi setVariable ["KPLIB_taxi_phase", "inserting", true];
     if ((_taxi getVariable ["ace_fastroping_deployedRopes", []]) isEqualTo []) then {
-        [_taxi] call ace_fastroping_fnc_prepareFRIES;
-        private _prepareDeadline = time + 15;
-        waitUntil {sleep 0.2;
-            (_taxi getVariable ["ace_fastroping_deploymentStage", 0]) == 2
-            || ([false] call _fnc_interrupted) || time > _prepareDeadline
-        };
         if ((_taxi getVariable ["ace_fastroping_deploymentStage", 0]) == 2 && {!([false] call _fnc_interrupted)}) then {
             [_taxi, objNull, "ACE_rope36"] call ace_fastroping_fnc_deployRopes;
             sleep 2;
         };
     };
+    [format ["Taxi %1 ropes deployed: %2", netId _taxi, count (_taxi getVariable ["ace_fastroping_deployedRopes", []])], "TAXI"] call KPLIB_fnc_log;
 
     private _queue = ([] call _fnc_passengers) select {alive _x};
     private _success = !(_queue isEqualTo []) && {!((_taxi getVariable ["ace_fastroping_deployedRopes", []]) isEqualTo [])};
