@@ -58,6 +58,7 @@ class KPLIB {
         class getSectorRange            {};
         class getSquadComp              {};
         class getStoragePositions       {};
+        class getTaxiRopeState           {};
         class getUnitPositionId         {};
         class getUnitsCount             {};
         class getWeaponComponents       {};
@@ -78,6 +79,8 @@ class KPLIB {
         class progShowRankData          {};
         class protectObject             {};
         class secondsToTimer            {};
+        class taxiRopeReadiness          {};
+        class taxiRopesClear             {};
         class selectStrongpointBuildings {};
         class setDiscordState           {};
         class setFobMass                {};

@@ -13,6 +13,7 @@ private _flightCrew = crew _taxi;
 private _damageAbort = false;
 private _landingPad = objNull;
 _taxi setVariable ["KPLIB_taxi_recall", []];
+_taxi setVariable ["KPLIB_taxi_lz", +_lzPos, true];
 
 // Enemy contacts must not replace the transport route with attack runs.
 _grp setBehaviour "CARELESS";
@@ -167,7 +168,18 @@ private _fnc_board = {
 };
 private _fnc_ropesClear = {
     private _ropes = _taxi getVariable ["ace_fastroping_deployedRopes", []];
-    ({(_x select 5) && {!(_x select 6)}} count _ropes) == 0
+    // ACE can leave the rider attached when the bottom rope segment breaks.
+    // A broken flag alone must never allow cutRopes or flight to resume.
+    private _states = [];
+    {
+        if (_x isEqualType [] && {count _x >= 7} && {(_x select 3) isEqualType objNull}) then {
+            private _riders = {_x isKindOf "CAManBase"} count attachedObjects (_x select 3);
+            _states pushBack [_x select 5, _x select 6, _riders];
+        } else {
+            _states pushBack []; // The decision helper fails closed on malformed state.
+        };
+    } forEach _ropes;
+    _states call KPLIB_fnc_taxiRopesClear
 };
 private _fnc_insert = {
     // Server-side ACE availability does not establish the passenger client's
@@ -215,6 +227,11 @@ private _fnc_insert = {
     [format ["Taxi %1 FRIES preparation stage: %2", netId _taxi, _stage], "TAXI"] call KPLIB_fnc_log;
     if (_stage < 2 || {[false] call _fnc_interrupted}) exitWith {false};
 
+    private _ropeOrigins = getArray (_config >> "ace_fastroping_ropeOrigins");
+    if (_ropeOrigins isEqualTo []) exitWith {
+        [format ["Taxi %1 has no configured rope attachment points", netId _taxi], "TAXI"] call KPLIB_fnc_log;
+        false
+    };
     _taxi setVariable ["KPLIB_taxi_phase", "stabilizing_hover", true];
     _pilot enableAI "MOVE";
     _grp setSpeedMode "LIMITED";
@@ -223,21 +240,21 @@ private _fnc_insert = {
     private _deadline = time + KPLIB_taxi_hover_timeout;
     private _nextCorrection = time + 5;
     private _hoverReady = false;
+    private _ropeState = [];
     waitUntil {
         sleep 0.5;
-        private _height = (getPosATL _taxi) select 2;
+        _ropeState = [_taxi, _lzPos] call KPLIB_fnc_getTaxiRopeState;
         if (time >= _nextCorrection) then {
             _taxi flyInHeight [20, true];
             if (_taxi distance2D _lzPos >= 50) then {_pilot doMove _lzPos;};
-            [format ["Taxi %1 stabilizing hover; height: %2 m, speed: %3 m/s, distance: %4 m", netId _taxi, round _height, vectorMagnitude velocity _taxi, round (_taxi distance2D _lzPos)], "TAXI"] call KPLIB_fnc_log;
+            [format ["Taxi %1 hover readiness [ready,reason,hookLength,ropeLength,speed,height,distance]: %2", netId _taxi, _ropeState], "TAXI"] call KPLIB_fnc_log;
             _nextCorrection = time + 5;
         };
-        _hoverReady = _height > 5 && {_height < 26} && {vectorMagnitude velocity _taxi < 3}
-            && {_taxi distance2D _lzPos < 50};
+        _hoverReady = _ropeState select 0;
         _hoverReady || ([false] call _fnc_interrupted) || time > _deadline
     };
     if (!_hoverReady || {[false] call _fnc_interrupted}) exitWith {
-        [format ["Taxi %1 hover not ready; height: %2 m, speed: %3 m/s, distance: %4 m", netId _taxi, round ((getPosATL _taxi) select 2), vectorMagnitude velocity _taxi, round (_taxi distance2D _lzPos)], "TAXI"] call KPLIB_fnc_log;
+        [format ["Taxi %1 hover not ready: %2", netId _taxi, _ropeState], "TAXI"] call KPLIB_fnc_log;
         false
     };
 
@@ -262,22 +279,36 @@ private _fnc_insert = {
         if (alive _passenger && {vehicle _passenger == _taxi}) then {
             // Dispatch on the unit's owner, including player clients and HCs.
             waitUntil {sleep 0.2; ([] call _fnc_ropesClear) || ([false] call _fnc_interrupted) || time > _deadline};
-            if (!([false] call _fnc_interrupted) && {time <= _deadline}) then {
-                [_passenger, _taxi] remoteExecCall ["taxi_fast_rope_local", _passenger];
+            private _dispatchState = [_taxi, _lzPos] call KPLIB_fnc_getTaxiRopeState;
+            if (!([false] call _fnc_interrupted) && {time <= _deadline} && {_dispatchState select 0}) then {
+                private _requestId = format ["%1/%2/%3", netId _taxi, netId _passenger, diag_tickTime];
+                // Scheduled RPC lets the passenger owner wait for replicated ACE
+                // state instead of silently dropping a request that arrived first.
+                [_passenger, _taxi, false, _requestId] remoteExec ["taxi_fast_rope_local", _passenger];
                 private _startDeadline = time + 10;
                 private _started = false;
+                private _reply = [];
+                private _refused = false;
                 waitUntil {sleep 0.2;
+                    _reply = _passenger getVariable ["KPLIB_taxi_rope_result", []];
+                    _refused = count _reply >= 3 && {_reply select 0 == _requestId} && {_reply select 1 == "refused"};
                     _started = vehicle _passenger != _taxi && {
                         !(isNull attachedTo _passenger) || {(getPosATL _passenger) select 2 < 2}
                     };
-                    _started || ([false] call _fnc_interrupted) || time > _startDeadline
+                    _started || _refused || !alive _passenger || ([false] call _fnc_interrupted) || time > _startDeadline
                 };
-                if (!_started) then {_success = false;};
+                if (!_started) then {
+                    _success = false;
+                    [format ["Taxi %1 passenger %2 did not start fast-roping; owner response: %3", netId _taxi, name _passenger, _reply], "TAXI"] call KPLIB_fnc_log;
+                };
                 waitUntil {sleep 0.2;
                     (([] call _fnc_ropesClear) && {isNull attachedTo _passenger})
                     || !alive _taxi || !alive _passenger || time > _deadline
                 };
-            } else {_success = false;};
+            } else {
+                _success = false;
+                [format ["Taxi %1 stopped passenger dispatch; readiness: %2", netId _taxi, _dispatchState], "TAXI"] call KPLIB_fnc_log;
+            };
         };
     } forEach _queue;
 

@@ -82,3 +82,19 @@ load via dynamic paths and can't be traced statically.
 ```bash
 uv run --no-project --with pytest pytest tools/tests -q
 ```
+
+### Taxi SQF regression tests
+
+The focused fast-rope regression suite executes the production SQF decision
+helpers in [SQF-VM](https://github.com/SQFvm/runtime). Install SQF-VM separately,
+then run:
+
+```bash
+python tools/run_taxi_sqf_tests.py --sqfvm /path/to/sqfvm
+```
+
+The suite checks hook reach, the reported 34 m hover, safety boundaries, broken
+ropes with attached riders, and invalid input. CI runs the suite using a pinned,
+checksum-verified SQF-VM release. It returns nonzero on failed assertions, script errors, or an
+incomplete VM run. It does not simulate Arma flight, ACE deployment, rope
+physics, locality, or passengers; those still require an in-game check.
