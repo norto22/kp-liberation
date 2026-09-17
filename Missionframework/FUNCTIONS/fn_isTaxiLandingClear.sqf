@@ -11,9 +11,10 @@ params [
 ];
 if (count _pos < 2 || {_class == ""}) exitWith {false};
 private _ground = [_pos select 0, _pos select 1, 0];
-// sizeOf may be zero before this aircraft model is instantiated. A 16 m radius
-// is the fallback, with a 3 m margin around larger loaded aircraft models.
-private _clearance = 16 max ((sizeOf _class) / 2 + 3);
+// Use the configured rotor collision radius, available before aircraft spawn.
+// Only modded aircraft without rotor metadata need a bounding-size fallback.
+private _rotorRadius = getNumber (configFile >> "CfgVehicles" >> _class >> "mainBladeRadius");
+private _clearance = if (_rotorRadius > 0) then {_rotorRadius + 2} else {12 max ((sizeOf _class) / 2 + 2)};
 if (surfaceIsWater _ground) exitWith {false};
 // Another taxi already committed to this footprint owns it until departure.
 private _reserved = false;
