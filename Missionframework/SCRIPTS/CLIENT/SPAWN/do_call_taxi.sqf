@@ -15,7 +15,7 @@ waitUntil { dialog };
 
 lbClear TAXI_FOB_LIST_IDC;
 {
-    lbAdd [TAXI_FOB_LIST_IDC, format ["FOB %1 - %2", (military_alphabet select _forEachIndex), mapGridPosition _x]];
+    lbAdd [TAXI_FOB_LIST_IDC, format ["FOB %1 - %2", (KPLIB_fob_alphabet select _forEachIndex), mapGridPosition _x]];
 } forEach _fobPositions;
 lbSetCurSel [TAXI_FOB_LIST_IDC, 0];
 

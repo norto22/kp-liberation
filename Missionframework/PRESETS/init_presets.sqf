@@ -315,8 +315,11 @@ KPLIB_typeAirClasses   = +KPLIB_b_air_classes;
     };
 } forEach (KPLIB_b_support_classes + [toLower huron_typename]);
 
-// Military alphabet used for FOBs and convois
+// Military alphabet used for convois
 military_alphabet = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-Ray", "Yankee", "Zulu"];
+
+// FOB names: first 6 use custom names, any FOB after that falls back to the military alphabet
+KPLIB_fob_alphabet = ["Peacock", "Norton", "Scholes", "Smith", "Keenan", "Noonan"] + military_alphabet;
 
 // Misc variables
 markers_reset = [99999,99999,0];
