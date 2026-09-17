@@ -22,6 +22,7 @@ Theme: address the late-campaign "buy it, throw it away, repeat" snowball, and g
 - **AI helicopter rappel taxi** — AI-crewed insertion/extraction via ACE fast-roping, no player pilot required. (`docs/plans/2026-09-16-ai-heli-rappel-taxi.md`)
 - **Player progression / veterancy** — custom per-campaign rank track from combat, logi, and support actions; cosmetic + personal AI-recruit-quality rewards; penalties for civilian/team kills and vehicle abandonment. (`docs/plans/2026-09-16-player-progression.md`)
 - **Logistics convoy visibility & distress-call escort** — convoys become real, always-visible AI-driven trucks that call for player help when threatened, fixing the existing bug where a defended convoy's route was wiped anyway. (`docs/plans/2026-09-16-logi-convoy-visibility-escort.md`)
+- **Fortified town strongpoints** — large and medium town sectors concentrate a few defenders into 1-3 densely garrisoned, road-facing buildings instead of scattering one random-facing soldier per building, and can't be captured while a strongpoint still holds. Pulled forward from its original v0.98.0 "Take & Hold" grouping — it has no dependency on either item there. (`docs/plans/2026-09-17-fortified-town-strongpoints.md`)
 
 Raw, not-yet-design-reviewed notes for later versions were captured in `docs/plans/2026-09-16-v097-backlog-notes.md` and are sorted into v0.98/v0.99 below.
 
@@ -35,7 +36,7 @@ Theme: extend the AI-crewed call-in pattern proven by the v0.97.0 taxi from *tra
   - **Do not reuse the taxi's cost/cooldown numbers.** QRF is strictly more powerful than the taxi — armed AI that fights *for* the squad, not just a ride — so it needs its own balance pass or it risks trivialising sector captures.
   - **Must respect (or explicitly bypass) the existing server-wide unit cap** — `KPLIB_blufor_cap`/`unit_cap.sqf` already caps total BLUFOR units; QRF's spawned AI friendlies aren't accounted for against that anywhere yet.
   - **Must decide whether QRF kills feed the v0.97.0 progression system's per-player kill points.** If they do, this is a farming exploit (call in AI, let it get kills, collect points for free) unless deliberately mitigated; if they don't, that exclusion should be a stated design decision, not an oversight.
-- **AI sector garrison** — assign recruits to hold a captured sector/FOB after the fight, so players don't have to personally camp every objective. Pairs directly with QRF: QRF takes a sector, garrison holds it afterward.
+- **AI sector garrison** — assign recruits to hold a captured sector/FOB after the fight, so players don't have to personally camp every objective. Pairs directly with QRF: QRF takes a sector, garrison holds it afterward. The v0.97.0 fortified-strongpoints feature already records which buildings were a sector's strongpoints in `KPLIB_sector_strongpoints`, so garrison can read where to hold instead of inventing its own "where do I stand" concept from scratch.
 
 Both items still need the same multi-round research-and-design-fork treatment the three v0.97.0 features went through before they're `/spec`-ready — currently they're one-paragraph notes, not design briefs.
 

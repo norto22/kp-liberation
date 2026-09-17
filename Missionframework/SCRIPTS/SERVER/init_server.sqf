@@ -35,6 +35,7 @@ wait_to_spawn_sector = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\SE
 
 // Globals
 active_sectors = []; publicVariable "active_sectors";
+KPLIB_sector_strongpoints = []; publicVariable "KPLIB_sector_strongpoints";
 
 execVM "SCRIPTS\SERVER\BASE\startgame.sqf";
 execVM "SCRIPTS\SERVER\BASE\huron_manager.sqf";

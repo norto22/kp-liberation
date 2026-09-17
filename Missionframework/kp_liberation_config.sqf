@@ -242,6 +242,15 @@ KPLIB_sector_cap = 180;                                                 // Cap f
 KPLIB_battlegroup_cap = 150;                                            // Cap for enemy battlegroups.
 KPLIB_patrol_cap = 150;                                                 // Cap for enemy patrols.
 
+KPLIB_strongpoint_building_thresholds = [15, 40, 80];                   // Building counts mapping to 1/2/3 strongpoints; below the first, zero.
+KPLIB_strongpoint_max_count = 3;                                        // Hard cap on strongpoints per sector.
+KPLIB_strongpoint_min_buildingpos = 8;                                  // Minimum building positions to qualify as a strongpoint candidate.
+KPLIB_strongpoint_spacing = 60;                                         // Minimum metres between selected strongpoints.
+KPLIB_strongpoint_defender_part = 0.4;                                  // Share of the sector's building-defender budget assigned to strongpoints.
+KPLIB_strongpoint_scatter_factor = 0.6;                                 // Multiplier on the remaining scattered building defenders.
+KPLIB_strongpoint_road_search_range = 40;                               // Metres, nearRoads query radius per candidate building.
+KPLIB_strongpoint_lane_cluster_angle = 45;                              // Degrees, angular threshold for collapsing road directions into one lane.
+
 KPLIB_cr_kill_penalty = 5;                                      // Civil Reputation penalty for killing a civilian.
 KPLIB_cr_building_penalty = 3;                                  // Civil Reputation penalty for destroying/damaging a building.
 KPLIB_cr_vehicle_penalty = 2;                                   // Civil Reputation penalty for stealing a civilian vehicle.

@@ -356,5 +356,6 @@ SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_squad2" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_squad3" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_squad4" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_stopit" not used
+SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_strongpointUnits" not used
 SCRIPTS/SERVER/SECTOR/manage_one_sector.sqf	warning	Variable "_vehtospawn" not used
 onPlayerRespawn.sqf	warning	Variable "_newUnit" not used

@@ -28,6 +28,7 @@ class KPLIB {
         class forceBluforCrew           {};
         class getAdaptiveVehicle        {};
         class getBluforRatio            {};
+        class getBuildingApproachLanes  {};
         class getCommander              {};
         class getCrateHeight            {};
         class getFobName                {};
@@ -75,6 +76,7 @@ class KPLIB {
         class progShowRankData          {};
         class protectObject             {};
         class secondsToTimer            {};
+        class selectStrongpointBuildings {};
         class setDiscordState           {};
         class setFobMass                {};
         class setLoadableViV            {};
@@ -88,6 +90,7 @@ class KPLIB {
         class spawnMilitaryPostSquad    {};
         class spawnMilitiaCrew          {};
         class spawnRegularSquad         {};
+        class spawnStrongpointSquad     {};
         class spawnVehicle              {};
         class swapInventory             {};
     };
