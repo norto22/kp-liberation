@@ -93,7 +93,7 @@ _player addAction [
         KPLIB_ace
         && {isNull (objectParent _originalTarget)}
         && {alive _originalTarget}
-        && {'ItemRadio' in (items _originalTarget)}
+        && {'ItemRadio' in ((items _originalTarget) + (assignedItems _originalTarget))}
         && {!(KPLIB_all_fobs isEqualTo [])}
         && {build_confirmed isEqualTo 0}
     "
@@ -111,7 +111,7 @@ _player addAction [
     "
         KPLIB_ace
         && {alive _originalTarget}
-        && {'ItemRadio' in (items _originalTarget)}
+        && {'ItemRadio' in ((items _originalTarget) + (assignedItems _originalTarget))}
         && {KPLIB_taxi_slots_active > 0}
         && {build_confirmed isEqualTo 0}
     "
@@ -129,7 +129,7 @@ _player addAction [
     "
         KPLIB_ace
         && {alive _originalTarget}
-        && {'ItemRadio' in (items _originalTarget)}
+        && {'ItemRadio' in ((items _originalTarget) + (assignedItems _originalTarget))}
         && {KPLIB_taxi_slots_active > 0}
         && {build_confirmed isEqualTo 0}
     "

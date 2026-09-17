@@ -11,6 +11,7 @@ intel_remote_call = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\REMOT
 start_secondary_remote_call = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\REMOTECALL\start_secondary_remote_call.sqf";
 taxi_call_remote_call = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\REMOTECALL\taxi_call_remote_call.sqf";
 taxi_recall_remote_call = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\REMOTECALL\taxi_recall_remote_call.sqf";
+taxi_fast_rope_local = compileFinal preprocessFileLineNumbers "SCRIPTS\CLIENT\REMOTECALL\taxi_fast_rope_local.sqf";
 change_prod_remote_call = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\REMOTECALL\change_prod_remote_call.sqf";
 build_fac_remote_call = compileFinal preprocessFileLineNumbers "SCRIPTS\SERVER\REMOTECALL\build_fac_remote_call.sqf";
 if (KPLIB_ailogistics) then {

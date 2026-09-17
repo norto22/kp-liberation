@@ -6,11 +6,29 @@ params [
     ["_lzPos", [0, 0, 0], [[]], [2, 3]]
 ];
 
+if !(_fobPos in KPLIB_all_fobs) exitWith {false};
 private _dist = _lzPos distance2D _fobPos;
 if (_dist < KPLIB_taxi_lz_min_range || _dist > KPLIB_taxi_lz_max_range) exitWith {false};
 
 private _cooldownCount = {_x > time} count KPLIB_taxi_cooldown_until;
 if (KPLIB_taxi_slots_active >= (KPLIB_taxi_pool_size - _cooldownCount)) exitWith {false};
+
+// Pick a clear landing site near the FOB, before charging for the flight.
+private _pickupPos = [_fobPos, 25, 150, 15, 0, 0.3, 0, [], [[0, 0], [0, 0]]] call BIS_fnc_findSafePos;
+if (_pickupPos isEqualTo [0, 0]) exitWith {false};
+
+// Arrive from the rear rather than materialising beside the waiting squad.
+// Try alternate bearings so another player cannot be standing at the spawn point.
+private _rearBearing = _fobPos getDir (getPosATL startbase);
+private _spawnPos = [];
+for "_bearingOffset" from 0 to 330 step 30 do {
+    private _candidate = _fobPos getPos [2500, _rearBearing + _bearingOffset];
+    if (({(_x distance2D _candidate) < 1500} count allPlayers) == 0) exitWith {
+        _spawnPos = _candidate;
+    };
+};
+if (_spawnPos isEqualTo []) exitWith {false};
+_spawnPos set [2, 150];
 
 // Gather this FOB's storage areas and their fuel crates, same lookup shape as
 // recalculate_resources.sqf's per-FOB resource scan.
@@ -46,13 +64,26 @@ please_recalculate = true;
 
 private _taxiClass = if (_classChoice == "armed") then {taxi_typename_armed} else {taxi_typename_light};
 
-private _taxi = _taxiClass createVehicle [(_fobPos select 0), (_fobPos select 1), (_fobPos select 2) + 0.2];
+private _taxi = createVehicle [_taxiClass, _spawnPos, [], 0, "FLY"];
 [_taxi] call KPLIB_fnc_forceBluforCrew;
+_taxi setDir (_spawnPos getDir _pickupPos);
+_taxi flyInHeight 100;
+// Equip the Ghost Hawk before boarding; ACE adds FRIES on the next frame.
+if (KPLIB_ace && {!isNil "ace_fastroping_fnc_equipFRIES"}) then {
+    _taxi addItemCargoGlobal ["ACE_rope36", 4];
+    if (getNumber (configFile >> "CfgVehicles" >> _taxiClass >> "ace_fastroping_enabled") == 2) then {
+        [_taxi] call ace_fastroping_fnc_equipFRIES;
+    };
+};
+private _requesters = allPlayers select {owner _x == remoteExecutedOwner};
+if !(_requesters isEqualTo []) then {
+    _taxi setVariable ["KPLIB_taxi_group", group (_requesters select 0)];
+};
 _taxi setVariable ["KPLIB_taxi_active", true, true];
 
 KPLIB_taxi_slots_active = KPLIB_taxi_slots_active + 1;
 publicVariable "KPLIB_taxi_slots_active";
 
-[_taxi, _lzPos, _fobPos] spawn taxi_flight;
+[_taxi, _lzPos, _fobPos, _pickupPos, _spawnPos] spawn taxi_flight;
 
 true

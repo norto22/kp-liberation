@@ -44,6 +44,30 @@ The area has fallen to the enemy, and it is up to you to take it back. Embark on
 * Accomplish meaningful secondary objectives that will benefit your progression.
 * Never lose your progress with the built-in server-side save system.
 
+## Testing the AI helicopter taxi (v0.97.0 development)
+
+Build this checkout with `build.bat` on Windows, or run `npm install` and `npx gulp` in `_tools`. Load the rebuilt mission with ACE3 and its dependencies. In-game verification of issue #3 is still in progress.
+
+With at least one FOB established, carry a vanilla `ItemRadio` either equipped or in inventory. While on foot and outside build mode, choose **Call Taxi** in the action menu. Select the departure FOB, choose Light or Armed, then click a destination **300–9,000 m from that FOB** to enable **Call**. The selected FOB needs fuel crates in its storage area; a call costs 2 fuel per kilometre, rounded up, with a minimum of 5.
+
+The taxi starts airborne about 2.5 km away and flies to a clear landing site within 150 m of the departure FOB. Board there using the normal get-in action. It waits for the first passenger, then for 15 seconds without a boarding change before departing for the selected insertion LZ. Landing and boarding each have a five-minute timeout.
+
+For the rope test, choose **Armed / Ghost Hawk**. It receives FRIES and four 36 m ACE ropes at spawn. At the LZ, the pilot must settle into a low, slow hover before ropes deploy and passengers descend automatically, one at a time. Passenger groups are preserved. The default Light / Hummingbird lacks ACE rope support and uses a landing instead. ACE's [fast-roping framework](https://ace3.acemod.org/wiki/framework/fastroping-framework) describes aircraft compatibility.
+
+After insertion, the same helicopter waits near the FOB for up to five minutes. **Extract at LZ** recalls your squad's nearest active taxi to a new field landing site; after boarding it returns to the departure FOB. **Return to FOB**, a timeout, or damage above 50% ends the insertion. The pilot must return and land rather than attack enemies or retry the insertion. Get out normally at the FOB. Cleanup only deletes an empty taxi away from players; if it cannot return or passengers remain aboard, it stays in the world.
+
+Regression checks (require Arma; static checks do not verify AI flight):
+
+- With ACE and a FOB available, verify Call Taxi appears with a radio equipped, remains available with it in inventory, and disappears after removing it entirely. Check both recall actions with an active taxi too.
+- Choose an LZ about 1 km from the selected FOB: Call enables and the request uses that FOB, including when it is not the first entry in the list.
+- Watch the taxi approach and land; it must not spawn beside the FOB or depart for insertion empty.
+- Board two passengers several seconds apart, including an FFV seat where available: departure must wait 15 seconds after the last boarding change.
+- Leave the taxi empty: it should depart after the boarding timeout and release its pool slot. Interrupt a pickup or destroy the taxi and verify passengers are not deleted and a destroyed airframe's slot enters cooldown.
+- In the Ghost Hawk, check FRIES and rope cargo before takeoff. Test insertion with two player clients and an AI passenger: ropes deploy once, everyone reaches the ground, and departure waits for all ropes to clear plus the grace period.
+- Damage the Ghost Hawk above 50% while hovering with passengers still aboard. It must abort to the FOB without strafing, retrying insertion, despawning, or ejecting passengers. Leave a passenger aboard for more than five minutes after landing: the aircraft must remain and still occupy its pool slot until they disembark.
+- Test Extract at LZ, Return to FOB, and two active taxis from different squads. A recall must affect only the requesting squad's taxi, and extraction must finish with landing and unloading at the departure FOB.
+- After a damage abort starts, repair the helicopter and request extraction: it must still finish returning to the FOB. With a healthy taxi on standby, let the original caller respawn and verify another member of the requesting squad can still recall it.
+
 ## Needed Mods
 These mods are needed if you want to use the prepackaged missionfiles from the release tab or Steam Workshop.
 You can play every map without any mods (only the maps themself) if you set the preset to custom in the file `kp_liberation_config`.

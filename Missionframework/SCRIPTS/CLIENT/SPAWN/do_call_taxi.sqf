@@ -43,6 +43,9 @@ while { dialog && alive player && taxi_call_confirmed == 0 } do {
 
 KPLIB_ui_notif = "";
 
+// Capture the selection while the listbox still exists.
+private _selectedFob = lbCurSel TAXI_FOB_LIST_IDC;
+
 if ( dialog ) then {
     closeDialog 0;
 };
@@ -51,8 +54,7 @@ if ( dialog ) then {
 
 [ "taxi_map_event", "onMapSingleClick" ] call BIS_fnc_removeStackedEventHandler;
 
-if ( taxi_call_confirmed == 1 && alive player ) then {
-    private _sel = lbCurSel TAXI_FOB_LIST_IDC;
-    private _fobPos = _fobPositions select _sel;
+if (taxi_call_confirmed == 1 && alive player && {_selectedFob >= 0} && {_selectedFob < count _fobPositions}) then {
+    private _fobPos = _fobPositions select _selectedFob;
     [_fobPos, KPLIB_taxi_class_choice, taxi_lz_position] remoteExec ["taxi_call_remote_call", 2];
 };
